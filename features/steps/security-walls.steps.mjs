@@ -4,7 +4,8 @@
  * src/middleware.ts) and SECURITY.md — the real files, never a copy of their text.
  */
 import { strict as assert } from 'node:assert';
-import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { Given, Then } from '@cucumber/cucumber';
@@ -14,6 +15,8 @@ const HEADERS = 'apps/store/public/_headers';
 const MIDDLEWARE = 'apps/store/src/middleware.ts';
 const POLICY = 'Content-Security-Policy:';
 const DETACH = '! Content-Security-Policy';
+const TOKEN = '{{INLINE_SCRIPT_HASHES}}';
+const BUILT = 'apps/store/dist/client';
 
 /** Locale prefixes of the site, as the middleware's regular expression writes them. */
 const PREFIXES = ['', '/es', '/ja', '/ko', '/pt-br'];
@@ -224,6 +227,143 @@ Then(
     }
   },
 );
+
+Then(
+  "script-src is 'self' and the hash placeholder, in _headers and in the middleware, and nowhere 'unsafe-inline', a scheme, a host or a wildcard",
+  function () {
+    const policies = [
+      [`${HEADERS} (/*)`, this.globalPolicy],
+      [`${MIDDLEWARE} (CSP_STRICT)`, this.strictPolicy],
+    ];
+    for (const [route, lines] of this.rules) {
+      const policy = policyOf(lines);
+      if (policy !== null && route !== '/*') policies.push([`${HEADERS} (${route})`, policy]);
+    }
+    for (const [where, policy] of policies) {
+      assert.deepEqual(
+        directives(policy)['script-src'],
+        ["'self'", TOKEN],
+        `${where}: script-src must be 'self' ${TOKEN} (the build replaces the placeholder with the hash of each inline script; anything else lets an injected script run)`,
+      );
+    }
+  },
+);
+
+Then(
+  "style-src is exactly 'self' and 'unsafe-inline', in _headers and in the middleware",
+  function () {
+    for (const [where, policy] of [
+      [`${HEADERS} (/*)`, this.globalPolicy],
+      [`${MIDDLEWARE} (CSP_STRICT)`, this.strictPolicy],
+    ]) {
+      assert.deepEqual(
+        directives(policy)['style-src'],
+        ["'self'", "'unsafe-inline'"],
+        `${where}: style-src changed; it holds the one allowance that SECURITY.md names as a residual risk, and may only lose it (a new source needs a decision)`,
+      );
+    }
+  },
+);
+
+/** Every file under `dir` ending in `suffix`. */
+async function filesEnding(dir, suffix) {
+  const found = [];
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) found.push(...(await filesEnding(full, suffix)));
+    else if (entry.name.endsWith(suffix)) found.push(full);
+  }
+  return found;
+}
+
+/**
+ * The inline scripts a browser would run in a page, read with a parser of our
+ * own (not the one the build uses): a start tag with no src and a JavaScript
+ * type, up to the next closing tag. Quoted attribute values may hold a '>'.
+ */
+function inlineScripts(html) {
+  const found = [];
+  const tag = /<script\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script\s*>/gi;
+  for (const [, attributes, body] of html.matchAll(tag)) {
+    if (/\ssrc\s*=/i.test(` ${attributes}`)) continue;
+    const type = /\stype\s*=\s*["']?([^"'\s>]*)/i.exec(` ${attributes}`)?.[1] ?? '';
+    if (type !== '' && !/^(module|(text|application)\/(x-)?(java|ecma)script)$/i.test(type))
+      continue;
+    found.push(body);
+  }
+  return found;
+}
+
+const sha256Source = (body) =>
+  `'sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}'`;
+
+Given('the built static layer', async function () {
+  this.builtHeaders = await readFile(path.join(repoRoot, BUILT, '_headers'), 'utf8').catch(() => {
+    assert.fail(`${BUILT}/_headers is missing: build the store first (npm run ci)`);
+  });
+  this.builtRules = headerRules(this.builtHeaders);
+});
+
+Then('no placeholder is left in the built _headers', function () {
+  assert.ok(
+    !this.builtHeaders.includes(TOKEN),
+    `${BUILT}/_headers still holds ${TOKEN}: the build step (scripts/csp-script-hashes.mjs) did not seal it, and the browser would read a source that matches nothing`,
+  );
+});
+
+Then(
+  'every inline script of every built page is allowed by the script-src of the built policy',
+  async function () {
+    const pages = await filesEnding(path.join(repoRoot, BUILT), '.html');
+    assert.ok(
+      pages.length > 100,
+      `${BUILT}: only ${pages.length} pages; the scan would prove nothing`,
+    );
+    const needed = new Map();
+    for (const page of pages) {
+      for (const body of inlineScripts(await readFile(page, 'utf8'))) {
+        needed.set(sha256Source(body), path.relative(repoRoot, page));
+      }
+    }
+    assert.ok(
+      needed.size > 0,
+      'no inline script found in the built pages: the island runtime is always there, so the scan is broken',
+    );
+    for (const [route, lines] of this.builtRules) {
+      const policy = policyOf(lines);
+      if (policy === null) continue;
+      const allowed = new Set(directives(policy)['script-src']);
+      assert.ok(
+        !allowed.has("'unsafe-inline'"),
+        `${BUILT}/_headers (${route}): script-src allows 'unsafe-inline'`,
+      );
+      for (const [source, page] of needed) {
+        assert.ok(
+          allowed.has(source),
+          `${BUILT}/_headers (${route}): script-src does not allow an inline script of ${page} (${source}); the browser would block it`,
+        );
+      }
+    }
+    this.neededScripts = [...needed.keys()];
+  },
+);
+
+Then('the list the Worker reads is the list the built policy carries', async function () {
+  const list = JSON.parse(
+    await readFile(path.join(repoRoot, BUILT, 'csp-script-hashes.json'), 'utf8'),
+  );
+  const carried = directives(policyOf(this.builtRules.get('/*')))['script-src'].filter(
+    (s) => s !== "'self'",
+  );
+  assert.deepEqual(
+    [...list.scripts].sort(),
+    [...carried].sort(),
+    'csp-script-hashes.json (read by the Worker for its own pages) and the built _headers disagree',
+  );
+  for (const source of this.neededScripts) {
+    assert.ok(list.scripts.includes(source), `csp-script-hashes.json lacks ${source}`);
+  }
+});
 
 Then(
   'SECURITY.md has a residual-risk note for each of script-src and style-src that the strict policy still allows inline, and for no other',

@@ -7,7 +7,10 @@ Feature: The security walls of numinia.com
   the properties that were closed on 2026-10-18 (MISSION-025): the strict
   policy cannot reach an external host with fetch, the two copies cannot
   drift apart, and only the pages where a wallet signs relax that rule.
-  The policy still allows inline scripts and styles; SECURITY.md says so,
+  Inline scripts are allowed one by one, by SHA-256 (MIS-269): the build
+  seals the list of the scripts the pages really contain into _headers and
+  into /csp-script-hashes.json, and the Worker reads that file for its own
+  pages. Inline styles are still allowed as a whole; SECURITY.md says so,
   and a scenario keeps that note true in both directions.
 
   Scenario: The strict policy is the same text on the static layer and on the pages the Worker answers
@@ -27,6 +30,20 @@ Feature: The security walls of numinia.com
     Then every rule of _headers that opens connect-src belongs to a page the middleware treats as a session page
     And every session page in every locale has its rule, detaching the global policy before relaxing it
     And the session policy of the middleware is the strict one with only connect-src and frame-src opened
+
+  Scenario: Scripts are allowed by hash, never by blanket
+    Given the source of the security walls
+    Then script-src is 'self' and the hash placeholder, in _headers and in the middleware, and nowhere 'unsafe-inline', a scheme, a host or a wildcard
+
+  Scenario: Styles keep the one allowance they have and gain no other
+    Given the source of the security walls
+    Then style-src is exactly 'self' and 'unsafe-inline', in _headers and in the middleware
+
+  Scenario: The built static layer allows exactly the inline scripts the pages ship
+    Given the built static layer
+    Then no placeholder is left in the built _headers
+    And every inline script of every built page is allowed by the script-src of the built policy
+    And the list the Worker reads is the list the built policy carries
 
   Scenario: SECURITY.md names the inline allowance for as long as the policy has it
     Given the source of the security walls
