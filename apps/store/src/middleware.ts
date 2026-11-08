@@ -6,8 +6,10 @@
  */
 
 import { defineMiddleware } from 'astro:middleware';
+import { applyScriptHashes, loadScriptHashes } from './lib/csp-inline';
+import type { AssetFetcher } from './lib/csp-inline';
 import { doorman } from './lib/rate-limit';
-import { primeFromWorkerd } from './lib/runtime-env';
+import { primeFromWorkerd, runtimeBinding } from './lib/runtime-env';
 import { capMessage, logEvent } from './lib/telemetry';
 
 /* MISSION-025 + security hardening (2026-10-18): the walls. Static pages get
@@ -18,10 +20,14 @@ import { capMessage, logEvent } from './lib/telemetry';
    worlds room, where an Oracle signs each request to a fleet machine, and
    Saldo's members tab, where giving «Administrador» or «Gestionar roles» is
    signed again (STD-051 ORG-008).
-   `script-src` keeps 'unsafe-inline': a hash list cannot work here — the
-   Cloudflare build wraps every island bootstrap in a shim (`globalThis.
-   process??={}`) that a Node-built hash never sees, so one missed hash
-   blocked every script, the sign-in included (2026-10-18).
+   `script-src` lists the SHA-256 of each inline script instead of allowing
+   all inline code (MIS-269). The list comes from the final build output
+   (lib/csp-inline.ts): a first attempt hashed the sources and missed what
+   the Cloudflare bundler emitted, and one wrong hash blocked the sign-in
+   (2026-10-18). Here the placeholder is filled from /csp-script-hashes.json,
+   the file the build leaves in the assets; if it cannot be read the policy
+   falls back to 'unsafe-inline' and says so in the log, so a page never
+   goes dark for a missing file.
    `connect-src` drops the open `https:` too: the client never
    fetches an external host directly — every chain/CDN binary goes through
    the same-origin `/api/media` proxy (src/lib/media-proxy.ts) precisely so
@@ -31,7 +37,7 @@ import { capMessage, logEvent } from './lib/telemetry';
    wallet SDK's RPC host is the user's own choice, not ours to allowlist. */
 const CSP_STRICT = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self' {{INLINE_SCRIPT_HASHES}}",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "media-src 'self' https:",
@@ -62,6 +68,7 @@ function isSessionPath(pathname: string): boolean {
 export function securityHeaders(
   pathname: string,
   contentType: string | null,
+  scriptHashes: readonly string[] | null = null,
 ): Record<string, string> {
   const headers: Record<string, string> = {
     'strict-transport-security': 'max-age=31536000; includeSubDomains',
@@ -70,9 +77,28 @@ export function securityHeaders(
     'permissions-policy': 'camera=(), microphone=(), geolocation=()',
   };
   if (contentType?.includes('text/html')) {
-    headers['content-security-policy'] = isSessionPath(pathname) ? CSP_SESSION : CSP_STRICT;
+    headers['content-security-policy'] = applyScriptHashes(
+      isSessionPath(pathname) ? CSP_SESSION : CSP_STRICT,
+      scriptHashes,
+    );
   }
   return headers;
+}
+
+/** The build's inline-script list, read once per isolate (a failed read is retried, never cached). */
+let scriptHashes: readonly string[] | null = null;
+let warnedNoHashes = false;
+async function currentScriptHashes(origin: string): Promise<readonly string[] | null> {
+  if (scriptHashes !== null) return scriptHashes;
+  scriptHashes = await loadScriptHashes(
+    runtimeBinding('ASSETS') as AssetFetcher | undefined,
+    origin,
+  );
+  if (scriptHashes === null && !warnedNoHashes) {
+    warnedNoHashes = true;
+    logEvent({ level: 'warn', kind: 'csp-script-hashes-unavailable' });
+  }
+  return scriptHashes;
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -94,9 +120,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
   try {
     const response = await next();
-    for (const [name, value] of Object.entries(
-      securityHeaders(pathname, response.headers.get('content-type')),
-    )) {
+    const contentType = response.headers.get('content-type');
+    const hashes = contentType?.includes('text/html')
+      ? await currentScriptHashes(context.url.origin)
+      : null;
+    for (const [name, value] of Object.entries(securityHeaders(pathname, contentType, hashes))) {
       response.headers.set(name, value);
     }
     if (pathname.startsWith('/api/')) {

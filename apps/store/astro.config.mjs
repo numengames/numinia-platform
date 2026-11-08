@@ -8,6 +8,7 @@ import sitemap from '@astrojs/sitemap';
 import { parseEnv } from '@numinia/domain';
 import { satteri } from '@astrojs/markdown-satteri';
 import { licenseManifest } from '../../scripts/vite-license-manifest.mjs';
+import { cspScriptHashes } from '../../scripts/csp-script-hashes.mjs';
 // The doors that went out (v0.83.0) and where each leads now — one map,
 // also read by the link checker and the tests (src/lib/redirects.ts).
 import { REDIRECTS } from './src/lib/redirects';
@@ -77,7 +78,12 @@ export default defineConfig({
    * Workers static assets layer serves as a 301 before any file.
    */
   redirects: { ...REDIRECTS },
-  vite: { define: publicDefines, plugins: [licenseManifest()] },
+  vite: {
+    define: publicDefines,
+    plugins: [licenseManifest()],
+    // Never inline a bundled script into the HTML: CSP script-src is 'self'.
+    build: { assetsInlineLimit: 0 },
+  },
   /**
    * Astro sessions off: we never use them (our session is our own signed
    * cookie), and leaving them on makes the Cloudflare adapter demand a KV
@@ -98,6 +104,8 @@ export default defineConfig({
       : node({ mode: 'standalone' }),
   integrations: [
     react(),
+    // MIS-269: seals the script-src hash list into _headers from the built pages.
+    cspScriptHashes(),
     sitemap({
       // Internal pages stay out of the index (robots.txt disallows them too).
       // Internal pages and redirect stubs stay out of the index.

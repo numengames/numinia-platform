@@ -22,9 +22,14 @@ const BUDGETS: readonly Budget[] = [
   // The front door of the communities platform (2026-10-14): the featured
   // community's illustration, the three seals and the city rituals' pictures
   // (~363KB measured; the cards without a picture draw a monogram, no art,
-  // to keep it there). Still 0 KB of external JS.
-  { path: '/', totalKB: 720, jsKB: 0, imgKB: 450 },
-  { path: '/es/', totalKB: 720, jsKB: 0, imgKB: 450 },
+  // to keep it there). 0→30 KB of external JS on 2026-11-08 (MIS-269): the
+  // site's scripts no longer ride inline in the HTML, because the CSP lists
+  // the hash of each inline script and cannot list them all (36 hashes ≈ 2400
+  // characters; Cloudflare allows 2000 per header line). Measured 24 KB in 17
+  // small deferred, immutable-cached files, instead of 32.7 KB inline: the
+  // same code, now external. Reverting MIS-269 restores 0.
+  { path: '/', totalKB: 720, jsKB: 30, imgKB: 450 },
+  { path: '/es/', totalKB: 720, jsKB: 30, imgKB: 450 },
   // The Bazaar (v0.83.0) — the one door to the goods; the Archive's index
   // and the Gallery (zero-JS pages, 620/450KB) went out with it. It is the
   // Finder's island rethought: React and the island (~211KB, the 3D viewer
@@ -33,10 +38,13 @@ const BUDGETS: readonly Budget[] = [
   // JS raised 230→250 on 2026-10-20 (React 19.2→19.3, v0.150.0): react-dom's
   // client chunk grew 56→65KB gzipped (ViewTransition, Fragment refs, Trusted
   // Types ride in it); measured 242KB. Library weight, not feature creep.
-  { path: '/bazaar/', totalKB: 940, jsKB: 250, imgKB: 380 },
+  // 250→275 on 2026-11-08 (MIS-269): the chrome's scripts are external now;
+  // measured 261KB.
+  { path: '/bazaar/', totalKB: 940, jsKB: 275, imgKB: 380 },
   // «Cómo funciona» took the old /city/ line (v0.83.0): text, six templates
-  // and one lazy illustration of the city's story. Zero external JS.
-  { path: '/how-it-works/', totalKB: 420, jsKB: 0, imgKB: 160 },
+  // and one lazy illustration of the city's story. 0→25 KB of external JS
+  // on 2026-11-08 (MIS-269, see «/» above); measured 19 KB.
+  { path: '/how-it-works/', totalKB: 420, jsKB: 25, imgKB: 160 },
   // 260→270 on 2026-10-17 (v0.126.0, «Seguir»): the chrome's inline scripts
   // (counters, the bell's dot, follows) ride on every page; /lap/ measured 261KB.
   { path: '/lap/', totalKB: 270, jsKB: 30, imgKB: 10 },
@@ -120,7 +128,7 @@ test.describe('on a density-2 screen', () => {
   test.use({ deviceScaleFactor: 2 });
   test('weight budget: /bazaar/ with the 480px cards', async ({ page }) => {
     const weight = await weigh(page, '/bazaar/');
-    expect(weight.js, `/bazaar/ ships ${weight.js}KB of JS`).toBeLessThanOrEqual(250);
+    expect(weight.js, `/bazaar/ ships ${weight.js}KB of JS`).toBeLessThanOrEqual(275);
     expect(weight.img, `/bazaar/ ships ${weight.img}KB of images`).toBeLessThanOrEqual(640);
     expect(weight.total, `/bazaar/ weighs ${weight.total}KB`).toBeLessThanOrEqual(1180);
   });
