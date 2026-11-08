@@ -89,7 +89,7 @@ const rankNames = Object.fromEntries(RANK_DEFINITIONS.map((rank) => [rank.id, ra
         rankNames={rankNames}
         profileHref={localeHref(locale, '/lap/')}
         homeHref={homeHref}
-        client:load
+        client:only="react"
       />
       <p class="legal" data-door-legal data-session-out>
         {legal.lead}<a

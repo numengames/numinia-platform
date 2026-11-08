@@ -13,6 +13,7 @@ import type { PlacementMessages } from '../../../i18n/mundos';
 import type { WorldsRoomMessages } from '../../../i18n/worlds';
 import { formatSize } from '../../../lib/fleet';
 import { enterWorldInNewTab } from '../../../lib/mundos';
+import { styleRef } from '../../../lib/style-ref';
 import {
   buildTag,
   describeStatus,
@@ -257,7 +258,7 @@ function UploadBar({
         aria-valuemax={100}
         aria-valuenow={share}
       >
-        <span style={{ width: `${share}%` }} />
+        <span ref={styleRef({ width: `${share}%` })} />
       </div>
       <span className="mono cifra-subida">{share} %</span>
     </div>
