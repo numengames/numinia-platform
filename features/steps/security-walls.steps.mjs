@@ -250,16 +250,22 @@ Then(
 );
 
 Then(
-  "style-src is exactly 'self' and 'unsafe-inline', in _headers and in the middleware",
+  "style-src is 'self' and hashes only, in _headers and in the middleware, and nowhere 'unsafe-inline', a scheme, a host or a wildcard",
   function () {
-    for (const [where, policy] of [
+    const policies = [
       [`${HEADERS} (/*)`, this.globalPolicy],
       [`${MIDDLEWARE} (CSP_STRICT)`, this.strictPolicy],
-    ]) {
-      assert.deepEqual(
-        directives(policy)['style-src'],
-        ["'self'", "'unsafe-inline'"],
-        `${where}: style-src changed; it holds the one allowance that SECURITY.md names as a residual risk, and may only lose it (a new source needs a decision)`,
+    ];
+    for (const [route, lines] of this.rules) {
+      const policy = policyOf(lines);
+      if (policy !== null && route !== '/*') policies.push([`${HEADERS} (${route})`, policy]);
+    }
+    for (const [where, policy] of policies) {
+      const [self, ...rest] = directives(policy)['style-src'] ?? [];
+      assert.equal(self, "'self'", `${where}: style-src must start with 'self'`);
+      assert.ok(
+        rest.every((s) => /^'sha256-[A-Za-z0-9+/]{43}='$/.test(s)),
+        `${where}: style-src may add only SHA-256 hashes after 'self' (found ${rest.join(' ')}); 'unsafe-inline', a scheme, a host or a wildcard lets an injected style in`,
       );
     }
   },
@@ -364,6 +370,65 @@ Then('the list the Worker reads is the list the built policy carries', async fun
     assert.ok(list.scripts.includes(source), `csp-script-hashes.json lacks ${source}`);
   }
 });
+
+/** The `<style>` blocks of a page: their bodies, exactly as the browser would hash them. */
+function styleBlocks(html) {
+  const tag = /<style\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/style\b[^>]*>/gi;
+  return [...html.matchAll(tag)].map((m) => m[2]);
+}
+
+Then('no built page carries a style attribute', async function () {
+  const pages = await filesEnding(path.join(repoRoot, BUILT), '.html');
+  assert.ok(
+    pages.length > 100,
+    `${BUILT}: only ${pages.length} pages; the scan would prove nothing`,
+  );
+  const offenders = [];
+  for (const page of pages) {
+    // Attributes are only looked for inside start tags, never in text or in scripts.
+    const html = (await readFile(page, 'utf8'))
+      .replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, '')
+      .replace(/<style\b[\s\S]*?<\/style\b[^>]*>/gi, '');
+    if (/<[a-z][^>]*\sstyle\s*=/i.test(html)) offenders.push(path.relative(repoRoot, page));
+  }
+  assert.deepEqual(
+    offenders.slice(0, 5),
+    [],
+    `${offenders.length} built page(s) carry a style attribute, and style-src has no 'unsafe-inline' to let it through`,
+  );
+});
+
+Then(
+  'every style block of every built page is allowed by the style-src of the built policy',
+  async function () {
+    const pages = await filesEnding(path.join(repoRoot, BUILT), '.html');
+    const needed = new Map();
+    for (const page of pages) {
+      for (const body of styleBlocks(await readFile(page, 'utf8'))) {
+        needed.set(sha256Source(body), path.relative(repoRoot, page));
+      }
+    }
+    assert.ok(
+      needed.size > 0,
+      'no style block found in the built pages: the island runtime always ships one, so the scan is broken',
+    );
+    for (const [route, lines] of this.builtRules) {
+      const policy = policyOf(lines);
+      if (policy === null) continue;
+      const allowed = new Set(directives(policy)['style-src']);
+      assert.ok(
+        !allowed.has("'unsafe-inline'"),
+        `${BUILT}/_headers (${route}): style-src allows 'unsafe-inline'`,
+      );
+      for (const [source, page] of needed) {
+        assert.ok(
+          allowed.has(source),
+          `${BUILT}/_headers (${route}): style-src does not allow a style block of ${page} (${source}); the browser would drop it`,
+        );
+      }
+    }
+  },
+);
 
 Then(
   'SECURITY.md has a residual-risk note for each of script-src and style-src that the strict policy still allows inline, and for no other',

@@ -35,15 +35,20 @@ Feature: The security walls of numinia.com
     Given the source of the security walls
     Then script-src is 'self' and the hash placeholder, in _headers and in the middleware, and nowhere 'unsafe-inline', a scheme, a host or a wildcard
 
-  Scenario: Styles keep the one allowance they have and gain no other
+  Scenario: Styles are allowed by hash, never by blanket
     Given the source of the security walls
-    Then style-src is exactly 'self' and 'unsafe-inline', in _headers and in the middleware
+    Then style-src is 'self' and hashes only, in _headers and in the middleware, and nowhere 'unsafe-inline', a scheme, a host or a wildcard
 
   Scenario: The built static layer allows exactly the inline scripts the pages ship
     Given the built static layer
     Then no placeholder is left in the built _headers
     And every inline script of every built page is allowed by the script-src of the built policy
     And the list the Worker reads is the list the built policy carries
+
+  Scenario: The built static layer allows exactly the inline styles the pages ship
+    Given the built static layer
+    Then no built page carries a style attribute
+    And every style block of every built page is allowed by the style-src of the built policy
 
   Scenario: SECURITY.md names the inline allowance for as long as the policy has it
     Given the source of the security walls

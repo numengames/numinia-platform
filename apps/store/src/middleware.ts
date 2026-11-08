@@ -28,6 +28,10 @@ import { capMessage, logEvent } from './lib/telemetry';
    the file the build leaves in the assets; if it cannot be read the policy
    falls back to 'unsafe-inline' and says so in the log, so a page never
    goes dark for a missing file.
+   `style-src` allows the one inline <style> the pages carry (the island
+   runtime's `display: contents`) by its hash and no style attribute: the
+   markup has none. The feature builds the site and fails if a built page
+   carries a <style> the policy does not list.
    `connect-src` drops the open `https:` too: the client never
    fetches an external host directly — every chain/CDN binary goes through
    the same-origin `/api/media` proxy (src/lib/media-proxy.ts) precisely so
@@ -38,7 +42,7 @@ import { capMessage, logEvent } from './lib/telemetry';
 const CSP_STRICT = [
   "default-src 'self'",
   "script-src 'self' {{INLINE_SCRIPT_HASHES}}",
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'sha256-vv9IoKo7BSLbWcUHr3tNmfNVmm5L/9Cfn2H6LMk7/ow='",
   "img-src 'self' data: blob: https:",
   "media-src 'self' https:",
   "font-src 'self'",

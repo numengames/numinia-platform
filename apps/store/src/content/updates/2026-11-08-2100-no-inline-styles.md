@@ -1,1 +1,2 @@
 - UPD — The pages no longer carry inline style attributes: sizes, spacing and colours come from the stylesheet, and the few computed values are set by script, so the security policy can refuse inline styles.
+- UPD — The security policy no longer allows inline styles: a style injected into a page is refused, and only the stylesheet files and the one built-in rule of the island runtime are accepted.
