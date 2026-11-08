@@ -31,6 +31,12 @@ describe('inlineScriptBodies', () => {
     expect(inlineScriptBodies(html)).toEqual(['var a=1', 'import("/x.js")', 'b()', 'c()']);
   });
 
+  it('ends a script at a closing tag that carries attributes or whitespace, as a browser does', () => {
+    // `</script\t\n bar>` closes the script in a browser: the body must stop there.
+    const html = '<script>a()</script\t\n bar><p>x</p><script>b()</script >';
+    expect(inlineScriptBodies(html)).toEqual(['a()', 'b()']);
+  });
+
   it('skips external scripts, data blocks and types a browser does not run', () => {
     const html =
       '<script src="/a.js"></script><script type="module" src="/b.js"></script>' +

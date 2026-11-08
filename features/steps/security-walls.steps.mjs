@@ -283,7 +283,7 @@ async function filesEnding(dir, suffix) {
  */
 function inlineScripts(html) {
   const found = [];
-  const tag = /<script\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script\s*>/gi;
+  const tag = /<script\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script\b[^>]*>/gi;
   for (const [, attributes, body] of html.matchAll(tag)) {
     if (/\ssrc\s*=/i.test(` ${attributes}`)) continue;
     const type = /\stype\s*=\s*["']?([^"'\s>]*)/i.exec(` ${attributes}`)?.[1] ?? '';

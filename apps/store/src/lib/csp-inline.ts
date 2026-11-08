@@ -33,7 +33,7 @@ const SOURCE_SHAPE = /^'sha256-[A-Za-z0-9+/]{43}='$/;
  * A `<script ...>` start tag whose attribute values may themselves contain `>`
  * — quoted in HTML, or inside `{ ... }` in an .astro source (`{(a) => a}`).
  */
-const SCRIPT = /<script\b((?:[^>"'{]|"[^"]*"|'[^']*'|\{[^{}]*\})*)>([\s\S]*?)<\/script\s*>/gi;
+const SCRIPT = /<script\b((?:[^>"'{]|"[^"]*"|'[^']*'|\{[^{}]*\})*)>([\s\S]*?)<\/script\b[^>]*>/gi;
 const IS_INLINE = /\sis:inline(?=[\s=>]|$)/;
 const SRC_ATTRIBUTE = /\ssrc\s*=/i;
 const TYPE_ATTRIBUTE = /\stype\s*=\s*["']?([^"'\s>]*)/i;
