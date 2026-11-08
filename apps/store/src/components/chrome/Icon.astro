@@ -185,7 +185,8 @@ const ICONS = {
 interface Props {
   name: keyof typeof ICONS;
   /** §7.1: regular 16–40px default; `-light` variants are for ≥48px. */
-  size?: number;
+  /** Only the sizes with a class in the stylesheet below (no style attribute: CSP). */
+  size?: 12 | 14 | 16 | 18 | 20 | 22 | 24 | 26 | 28 | 32 | 40 | 48 | 72;
   /** Meaningful icons carry a label; omitted = decorative (aria-hidden). */
   label?: string;
   class?: string;
@@ -199,8 +200,9 @@ interface Props {
 
 const { name, size = 20, label, class: className, use = false, symbol = false } = Astro.props;
 const parts = symbol ? svgParts(ICONS[name]) : undefined;
-// 20px is the stylesheet's default: the attribute only travels when it differs.
-const sizeStyle = size === 20 ? undefined : `--icono-size:${size}px`;
+// 20px is the stylesheet's default: the size class only travels when it differs
+// (a style attribute would need 'unsafe-inline' in style-src).
+const sizeClass = size === 20 ? undefined : `icono-${size}`;
 ---
 
 {
@@ -220,8 +222,7 @@ const sizeStyle = size === 20 ? undefined : `--icono-size:${size}px`;
     </svg>
   ) : (
     <span
-      class:list={['icono', className]}
-      style={sizeStyle}
+      class:list={['icono', sizeClass, className]}
       aria-hidden={label ? undefined : 'true'}
       role={label ? 'img' : undefined}
       aria-label={label}
@@ -242,4 +243,16 @@ const sizeStyle = size === 20 ? undefined : `--icono-size:${size}px`;
     height: var(--icono-size, 20px);
     display: block;
   }
+  .icono-12 { --icono-size: 12px; }
+  .icono-14 { --icono-size: 14px; }
+  .icono-16 { --icono-size: 16px; }
+  .icono-18 { --icono-size: 18px; }
+  .icono-22 { --icono-size: 22px; }
+  .icono-24 { --icono-size: 24px; }
+  .icono-26 { --icono-size: 26px; }
+  .icono-28 { --icono-size: 28px; }
+  .icono-32 { --icono-size: 32px; }
+  .icono-40 { --icono-size: 40px; }
+  .icono-48 { --icono-size: 48px; }
+  .icono-72 { --icono-size: 72px; }
 </style>

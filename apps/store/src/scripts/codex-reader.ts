@@ -77,12 +77,6 @@ function initReader(codex: HTMLElement): void {
     // WCAG 2.5.3 (axe `label-content-name-mismatch`): the accessible name
     // starts with the words the button shows, then says what it switches.
     modeButton?.setAttribute('aria-label', `${visible}, ${ui.mode}`);
-    codex
-      .querySelector<SVGElement>('[data-ico-sol]')
-      ?.style.setProperty('display', night ? 'none' : '');
-    codex
-      .querySelector<SVGElement>('[data-ico-luna]')
-      ?.style.setProperty('display', night ? '' : 'none');
   };
   modeButton?.addEventListener('click', () => {
     const night = codex.classList.toggle('nocturno');
@@ -172,9 +166,9 @@ function initReader(codex: HTMLElement): void {
     if (returnButton instanceof HTMLAnchorElement) {
       if (mark) {
         returnButton.href = `${prefix}/lap/codex/${mark.chapterSlug}/#${mark.blockId}`;
-        returnButton.style.display = '';
+        returnButton.setAttribute('data-shown', '');
       } else {
-        returnButton.style.display = 'none';
+        returnButton.removeAttribute('data-shown');
       }
     }
   };

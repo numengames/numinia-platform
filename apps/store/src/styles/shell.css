@@ -1314,3 +1314,42 @@ html[data-js='on'] .bocadillo:not([data-placed]) {
     display: block;
   }
 }
+
+/*
+ * Spacing utilities that replace former style="" attributes (CSP: style-src
+ * has no 'unsafe-inline'). !important keeps the weight an inline style had
+ * over component rules, so nothing moves.
+ */
+.u-m0 {
+  margin: 0 !important;
+}
+.u-m-t-s3 {
+  margin: var(--s3) 0 0 !important;
+}
+.u-m-t-s4 {
+  margin: var(--s4) 0 0 !important;
+}
+.u-m-b-s3 {
+  margin: 0 0 var(--s3) !important;
+}
+.u-m-b-s4 {
+  margin: 0 0 var(--s4) !important;
+}
+.u-m-s4-s8 {
+  margin: var(--s4) 0 var(--s8) !important;
+}
+.u-m-s2-s4 {
+  margin: var(--s2) 0 var(--s4) !important;
+}
+.u-mb-s4 {
+  margin-bottom: var(--s4) !important;
+}
+.u-mt-s5 {
+  margin-top: var(--s5) !important;
+}
+.u-mr-6 {
+  margin-right: 6px !important;
+}
+.u-block {
+  display: block !important;
+}

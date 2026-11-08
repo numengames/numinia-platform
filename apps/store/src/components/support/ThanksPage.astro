@@ -48,7 +48,12 @@ const STARS = Array.from({ length: 24 }, (_, i) => ({
       {STARS.map((s) => (
         <span
           class={`estrella ${s.color}`}
-          style={`--a:${s.angle}deg;--d:${s.distance}px;--s:${s.size}px;--t:${s.delay}ms`}
+          data-style={JSON.stringify({
+            '--a': `${s.angle}deg`,
+            '--d': `${s.distance}px`,
+            '--s': `${s.size}px`,
+            '--t': `${s.delay}ms`,
+          })}
         />
       ))}
     </div>

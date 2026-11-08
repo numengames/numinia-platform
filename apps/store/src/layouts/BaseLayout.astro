@@ -188,9 +188,11 @@ const urlFor = (target: SupportedLocale): string =>
     {/* Every page asks, the chromeless Codex included (LEG-003 §4). */}
     <CookieNotice />
     <script>
-      // One module, inlined: the cookie notice's loader and the metrics it gates.
+      // One module, inlined: the cookie notice's loader, the metrics it gates and
+      // the data-style applier (dynamic values without style attributes).
       import '../scripts/cookie-notice';
       import '../scripts/metrics';
+      import '../scripts/data-style';
     </script>
     <script is:inline>
       /* M-022 error beacon: no identity, max 3 per page. */
