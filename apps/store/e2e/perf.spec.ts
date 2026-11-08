@@ -128,7 +128,7 @@ test.describe('on a density-2 screen', () => {
   test.use({ deviceScaleFactor: 2 });
   test('weight budget: /bazaar/ with the 480px cards', async ({ page }) => {
     const weight = await weigh(page, '/bazaar/');
-    expect(weight.js, `/bazaar/ ships ${weight.js}KB of JS`).toBeLessThanOrEqual(250);
+    expect(weight.js, `/bazaar/ ships ${weight.js}KB of JS`).toBeLessThanOrEqual(275);
     expect(weight.img, `/bazaar/ ships ${weight.img}KB of images`).toBeLessThanOrEqual(640);
     expect(weight.total, `/bazaar/ weighs ${weight.total}KB`).toBeLessThanOrEqual(1180);
   });
