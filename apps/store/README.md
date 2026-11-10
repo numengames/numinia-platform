@@ -56,3 +56,24 @@ and re-validates every field; neither side trusts a browser
 answers). Under `DATA_SOURCE=fixture` (CI, acceptance, screenshots) the desk
 is an in-memory fake seeded from `fixtures/prices/desk.json`
 (`lib/prices-fixture.ts`); the till holds the real rules.
+
+## A Safe that leads a community: its big acts (MIS-266)
+
+When the till says a Safe multisig leads a community (`settings.safe`, read by
+`readSettings` in `lib/accounts.ts`), its big acts (`OWNER_ACTS`, STD-052) run
+only with a `fresh` proof the Safe itself signed for that very act.
+`lib/safe-act-gate.ts` `checkSafeAct` reuses the fresh signature of ORG-008
+(`lib/fresh-signature.ts`: our MAC, the clock, the act's digest) and asks the Safe
+through `verifyWalletSignature` (`lib/auth/server.ts`, ERC-1271 / ERC-6492). A
+single owner's key is not the Safe: below the threshold the Safe answers no.
+A community without a Safe is `open`: the two owners' rules apply as before.
+
+**New runtime dependency: an RPC for the Safe's chain.** The signature check
+calls `isValidSignature` on the Safe contract through thirdweb's RPC for the
+chain the Safe lives on, with `THIRDWEB_SECRET_KEY` (already required by auth).
+The chains are the till's `SAFE_CHAINS`: 1, 10, 100, 137, 8453, 42161, 11155111, 84532. Any other chain is refused. If the RPC cannot answer, the check fails
+closed (`mismatch`): the big act does not run.
+
+Status: the gate and the reading of `safe` are in place and tested
+(`__tests__/safe-act-gate.test.ts`). No store route carries an `OWNER_ACTS` act
+yet, so nothing calls the gate until one is wired.

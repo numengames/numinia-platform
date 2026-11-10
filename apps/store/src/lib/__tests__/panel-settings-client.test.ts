@@ -22,7 +22,7 @@ describe('reading the settings in the browser', () => {
       return answer({ settings })();
     }, 'acc t');
     expect(seen).toEqual(['/api/saldo/settings?cuenta=acc%20t']);
-    expect(read).toEqual({ ok: true, ...settings });
+    expect(read).toEqual({ ok: true, ...settings, safe: null });
   });
 
   it('is null when the till refused, answered out of shape, answered no JSON or the network failed', async () => {
@@ -44,7 +44,7 @@ describe('saving the settings in the browser', () => {
       'acc_t_1',
       { off: ['roles'] },
     );
-    expect(saved).toEqual({ ok: true, ...settings });
+    expect(saved).toEqual({ ok: true, ...settings, safe: null });
     expect(sent[0]?.url).toBe('/api/saldo/settings');
     expect(sent[0]?.init?.method).toBe('POST');
     expect(JSON.parse(String(sent[0]?.init?.body))).toEqual({
