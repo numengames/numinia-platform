@@ -1,0 +1,1 @@
+- NEW — In the Worlds room, each machine is a button that opens its card with the number of worlds it hosts.
