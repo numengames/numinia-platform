@@ -6,9 +6,10 @@ this code:
 
 1. One pull request per cut, against `main`. No force pushes, no
    self-merge.
-2. Every change under `apps/store/src/**` adds an entry to
-   `apps/store/src/lib/updates.ts` and raises the version — CI refuses the
-   merge otherwise.
+2. Every change under `apps/store/src/**` adds ONE release-note file in
+   `apps/store/src/content/updates/` (`YYYY-MM-DD-HHMM-slug.md`, UTC) — CI
+   refuses the merge otherwise. Nobody writes or bumps a version: the Nth
+   note is the Nth release (details in [`AGENTS.md`](AGENTS.md)).
 3. Run `npm run verify` before pushing; the gates that bite are listed in
    [`AGENTS.md`](AGENTS.md).
 4. English in code, comments and commits. Conventional commits
