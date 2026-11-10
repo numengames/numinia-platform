@@ -71,7 +71,11 @@ import {
   problemFields,
   proposeName,
   readDohAnswer,
+  readEngineNotes,
   readEngineRelease,
+  groupNotes,
+  machineMarks,
+  releaseLabel,
   readProbe,
   renderOrder,
   rowPlace,
@@ -1119,6 +1123,95 @@ describe('the Numinia Engine beside Hyperfy', () => {
       { ...RELEASE, digest: null },
     ];
     for (const body of broken) expect(readEngineRelease(body)).toBeNull();
+  });
+
+  it('reads the version and notes of a release, and drops what is not one', () => {
+    const note = { kind: 'minor', title: ' T ', text: ' Hello ', date: '2026-11-07' };
+    expect(readEngineRelease({ ...RELEASE, version: '0.108.0', notes: [note] })).toEqual({
+      ...RELEASE,
+      version: '0.108.0',
+      notes: [{ ...note, title: 'T', text: 'Hello' }],
+    });
+    // A version that is not three numbers is not believed; the release still counts.
+    for (const version of ['v1', '1.2', 5, null]) {
+      expect(readEngineRelease({ ...RELEASE, version })).toEqual(RELEASE);
+    }
+    expect(readEngineRelease({ ...RELEASE, notes: [] })).toEqual(RELEASE);
+    expect(readEngineRelease({ ...RELEASE, notes: 'x' })).toEqual(RELEASE);
+  });
+
+  it('reads novedades.json: kinds, trimmed text, a cap, and no junk', () => {
+    expect(readEngineNotes({})).toEqual([]);
+    const got = readEngineNotes([
+      null,
+      'x',
+      { kind: 'major', text: 'A' },
+      { kind: 'weird', title: 7, text: 'B', date: 'yesterday' },
+      { kind: 'minor', text: '   ' },
+      { kind: 'minor', text: 5 },
+      { kind: 'patch', title: 'T', text: 'x'.repeat(5000), date: '2026-01-02' },
+    ]);
+    expect(got.map((n) => [n.kind, n.title, n.date])).toEqual([
+      ['major', '', ''],
+      ['patch', '', ''],
+      ['patch', 'T', '2026-01-02'],
+    ]);
+    expect(got[2]?.text).toHaveLength(1200);
+    const many = Array.from({ length: 60 }, () => ({ kind: 'minor', text: 'n' }));
+    expect(readEngineNotes(many)).toHaveLength(40);
+  });
+
+  it('groups the notes by kind, the biggest first, and labels the build with its version', () => {
+    const n = (kind: 'major' | 'minor' | 'patch') => ({ kind, title: '', text: kind, date: '' });
+    expect(
+      groupNotes([n('patch'), n('minor'), n('patch')]).map((g) => [g.kind, g.notes.length]),
+    ).toEqual([
+      ['minor', 1],
+      ['patch', 2],
+    ]);
+    expect(groupNotes([])).toEqual([]);
+    expect(releaseLabel({ build: 'abc 2026-11-10', version: '0.108.0' })).toBe(
+      '0.108.0 · abc 2026-11-10',
+    );
+    expect(releaseLabel({ build: 'abc 2026-11-10' })).toBe('abc 2026-11-10');
+  });
+
+  it('marks each world of each open machine: current, behind, pinned or another engine', () => {
+    const row = (id: string, server: string, image: string) => ({
+      id,
+      order: { ...VALID, id, server, image },
+    });
+    const pinRow = {
+      ...row('held', 'bronte', ENGINE_OLD),
+      pin: { image: ENGINE_OLD, reason: 'demo' },
+    };
+    const rows = [
+      row('fresh', 'bronte', RELEASE.image),
+      row('old', 'bronte', ENGINE_OLD),
+      pinRow,
+      row('hyper', 'open-1', DEFAULT_IMAGE),
+      { id: 'gone', order: null },
+    ];
+    const got = machineMarks(
+      rows,
+      [
+        { alias: 'bronte', open: true },
+        { alias: 'open-1', open: true },
+        { alias: 'empty', open: true },
+        { alias: 'down', open: false },
+      ],
+      RELEASE,
+    );
+    expect(got.map((m) => m.alias)).toEqual(['bronte', 'open-1', 'empty']);
+    expect(got[0]?.worlds.map((w) => [w.id, w.mark])).toEqual([
+      ['fresh', 'current'],
+      ['old', 'behind'],
+      ['held', 'pinned'],
+    ]);
+    expect(got[0]?.worlds[1]?.build).toBe('sha-c57dbb7');
+    expect(got[1]?.worlds.map((w) => w.mark)).toEqual(['other']);
+    expect(got[2]?.worlds).toEqual([]);
+    expect(machineMarks(rows, [{ alias: 'bronte', open: true }], null)).toEqual([]);
   });
 
   it('offers «Actualizar» for a world of the engine on an older build, where its door takes updates', () => {

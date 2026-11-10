@@ -861,12 +861,66 @@ export interface EngineRelease {
   readonly build: string;
   /** The image's digest, `sha256:<64 hex>`. */
   readonly digest: string;
+  /** The engine's semantic version (`0.108.0`); absent when the release does not say one. */
+  readonly version?: string;
+  /** What this release brought (`novedades.json`); absent when the release has none. */
+  readonly notes?: readonly EngineNote[];
+}
+
+/** One line of a release's `novedades.json`. */
+export interface EngineNote {
+  readonly kind: 'major' | 'minor' | 'patch';
+  readonly title: string;
+  readonly text: string;
+  readonly date: string;
 }
 
 const RELEASE_IMAGE = /^ghcr\.io\/numengames\/numinia-engine:sha-([0-9a-f]{40})$/;
 const RELEASE_COMMIT = /^[0-9a-f]{40}$/;
 const RELEASE_BUILD = /^[0-9A-Za-z][0-9A-Za-z .:+_-]{0,79}$/;
 const RELEASE_DIGEST = /^sha256:[0-9a-f]{64}$/;
+const RELEASE_VERSION = /^\d{1,4}\.\d{1,4}\.\d{1,4}$/;
+/** The most notes, and the longest text of one, the room keeps. */
+const NOTES_MAX = 40;
+const NOTE_TEXT_MAX = 1200;
+const NOTE_TITLE_MAX = 200;
+
+/**
+ * A release's `novedades.json` → its notes; anything that is not a note is
+ * left out, a kind other than major/minor/patch counts as patch, and a body
+ * that is not a list gives none.
+ */
+export function readEngineNotes(body: unknown): EngineNote[] {
+  if (!Array.isArray(body)) return [];
+  const notes: EngineNote[] = [];
+  for (const item of body as unknown[]) {
+    if (!isRecord(item) || typeof item.text !== 'string' || item.text.trim() === '') continue;
+    const { kind, title, date } = item;
+    notes.push({
+      kind: kind === 'major' || kind === 'minor' ? kind : 'patch',
+      title: typeof title === 'string' ? title.trim().slice(0, NOTE_TITLE_MAX) : '',
+      text: item.text.trim().slice(0, NOTE_TEXT_MAX),
+      date: typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '',
+    });
+    if (notes.length === NOTES_MAX) break;
+  }
+  return notes;
+}
+
+/** The notes of a release by kind, the biggest change first; empty kinds are left out. */
+export function groupNotes(
+  notes: readonly EngineNote[],
+): { readonly kind: EngineNote['kind']; readonly notes: readonly EngineNote[] }[] {
+  return (['major', 'minor', 'patch'] as const).flatMap((kind) => {
+    const of = notes.filter((note) => note.kind === kind);
+    return of.length === 0 ? [] : [{ kind, notes: of }];
+  });
+}
+
+/** How a person reads the newest build: `0.108.0 · 8685dbe 2026-11-10`, or the build alone without a version. */
+export function releaseLabel(release: Pick<EngineRelease, 'build' | 'version'>): string {
+  return release.version === undefined ? release.build : `${release.version} · ${release.build}`;
+}
 
 /**
  * A release's `imagen.json` → the newest engine build; null unless every
@@ -880,7 +934,17 @@ export function readEngineRelease(body: unknown): EngineRelease | null {
   if (built === null || built[1] !== commit || !RELEASE_COMMIT.test(commit)) return null;
   if (typeof build !== 'string' || !RELEASE_BUILD.test(build)) return null;
   if (typeof digest !== 'string' || !RELEASE_DIGEST.test(digest)) return null;
-  return { image, commit, build, digest };
+  const { version } = body;
+  const notes = readEngineNotes(body.notes);
+  return {
+    image,
+    commit,
+    build,
+    digest,
+    // A version that is not three numbers is not believed; the release still counts.
+    ...(typeof version === 'string' && RELEASE_VERSION.test(version) ? { version } : {}),
+    ...(notes.length > 0 ? { notes } : {}),
+  };
 }
 
 /**
@@ -959,6 +1023,52 @@ export function fleetEngine(
     });
   }
   return { current: engine, laggards, total, otherEngine };
+}
+
+/** How a world of an open machine stands against the newest build. */
+export type WorldMark = 'current' | 'behind' | 'pinned' | 'other';
+
+/** One open machine and its worlds, each with its build and mark. */
+export interface MachineMarks {
+  readonly alias: string;
+  readonly worlds: readonly {
+    readonly id: string;
+    /** The build it is ordered with, short; for another engine, its name and build. */
+    readonly build: string;
+    readonly mark: WorldMark;
+  }[];
+}
+
+/**
+ * Every open machine with its worlds, marked: a world held on a build is
+ * `pinned` (held, whatever the build), one of another engine is `other`,
+ * one on the newest build `current`, any other `behind`. Machines whose
+ * door did not answer are left out, and with no release there is nothing
+ * to mark against.
+ */
+export function machineMarks(
+  rows: readonly Pick<WorldRow, 'id' | 'order' | 'pin'>[],
+  machines: readonly Pick<MachineSummary, 'alias' | 'open'>[],
+  engine: EngineRelease | null,
+): MachineMarks[] {
+  if (engine === null) return [];
+  return machines
+    .filter((machine) => machine.open)
+    .map((machine) => ({
+      alias: machine.alias,
+      worlds: rows.flatMap(({ id, order, pin }) => {
+        if (order === null || order.server !== machine.alias) return [];
+        const mine = engineOf(order.image) === 'numinia-engine';
+        const mark: WorldMark = !mine
+          ? 'other'
+          : pin
+            ? 'pinned'
+            : order.image === engine.image
+              ? 'current'
+              : 'behind';
+        return [{ id, build: mine ? buildTag(order.image) : engineTag(order.image), mark }];
+      }),
+    }));
 }
 
 /** Whether a machine's door says it takes a PinWorld: the only one a pin is offered to. */

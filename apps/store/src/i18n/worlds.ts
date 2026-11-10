@@ -191,6 +191,27 @@ export interface WorldsRoomMessages {
     readonly lastPass: string;
     /** On a world's card, when it is held: `{b}` build, `{r}` reason. */
     readonly cardPinned: string;
+    /** Heading of the machines list. */
+    readonly machinesTitle: string;
+    /** One world under its machine: `{id}`, `{b}` build, `{mark}` its mark below. */
+    readonly machineWorld: string;
+    /** The machine has no world. */
+    readonly machineEmpty: string;
+    /** The marks of a world against the newest build. */
+    readonly marks: {
+      readonly current: string;
+      readonly behind: string;
+      readonly pinned: string;
+      readonly other: string;
+    };
+    /** The fold's label: what the newest version brought. */
+    readonly brought: string;
+    /** The kinds of change, biggest first. */
+    readonly kinds: {
+      readonly major: string;
+      readonly minor: string;
+      readonly patch: string;
+    };
   };
   /** One signed request on its way: `{m}` is the machine. */
   readonly steps: {
@@ -709,6 +730,12 @@ export const WORLDS_UI: Readonly<Record<SupportedLocale, WorldsRoomMessages>> = 
       haltedNoReason: '{m} ha parado las actualizaciones.',
       lastPass: 'Última pasada de {m}: {a}, {when}.',
       cardPinned: 'Fijado en {b}: {r}',
+      machinesTitle: 'Máquinas y sus mundos',
+      machineWorld: '{id} · {b} · {mark}',
+      machineEmpty: 'Sin mundos.',
+      marks: { current: 'Al día', behind: 'Atrasado', pinned: 'Fijado', other: 'Otro motor' },
+      brought: 'Qué ha traído',
+      kinds: { major: 'Cambios grandes', minor: 'Funciones nuevas', patch: 'Arreglos' },
     },
     steps: {
       signing: 'Tu cartera te pide firmar…',
@@ -1268,6 +1295,12 @@ export const WORLDS_UI: Readonly<Record<SupportedLocale, WorldsRoomMessages>> = 
       haltedNoReason: '{m} has stopped its updates.',
       lastPass: 'Last pass of {m}: {a}, {when}.',
       cardPinned: 'Pinned to {b}: {r}',
+      machinesTitle: 'Machines and their worlds',
+      machineWorld: '{id} · {b} · {mark}',
+      machineEmpty: 'No worlds.',
+      marks: { current: 'Up to date', behind: 'Behind', pinned: 'Pinned', other: 'Other engine' },
+      brought: 'What it brought',
+      kinds: { major: 'Major changes', minor: 'New features', patch: 'Fixes' },
     },
     steps: {
       signing: 'Your wallet asks you to sign…',
@@ -1832,6 +1865,12 @@ export const WORLDS_UI: Readonly<Record<SupportedLocale, WorldsRoomMessages>> = 
       haltedNoReason: '{m} は更新を停止しました。',
       lastPass: '{m} の直近の実行: {a}、{when}。',
       cardPinned: '{b} に固定: {r}',
+      machinesTitle: 'マシンとそのワールド',
+      machineWorld: '{id} · {b} · {mark}',
+      machineEmpty: 'ワールドはありません。',
+      marks: { current: '最新', behind: '遅れている', pinned: '固定', other: '別のエンジン' },
+      brought: '追加された内容',
+      kinds: { major: '大きな変更', minor: '新機能', patch: '修正' },
     },
     steps: {
       signing: 'ウォレットが署名を求めています…',
@@ -2396,6 +2435,12 @@ export const WORLDS_UI: Readonly<Record<SupportedLocale, WorldsRoomMessages>> = 
       haltedNoReason: '{m}이(가) 업데이트를 멈췄습니다.',
       lastPass: '{m}의 마지막 실행: {a}, {when}.',
       cardPinned: '{b}에 고정: {r}',
+      machinesTitle: '머신과 월드',
+      machineWorld: '{id} · {b} · {mark}',
+      machineEmpty: '월드가 없습니다.',
+      marks: { current: '최신', behind: '뒤처짐', pinned: '고정됨', other: '다른 엔진' },
+      brought: '새로 들어온 것',
+      kinds: { major: '큰 변경', minor: '새 기능', patch: '수정' },
     },
     steps: {
       signing: '지갑이 서명을 요청합니다…',
@@ -2954,6 +2999,12 @@ export const WORLDS_UI: Readonly<Record<SupportedLocale, WorldsRoomMessages>> = 
       haltedNoReason: '{m} parou as atualizações.',
       lastPass: 'Última passagem de {m}: {a}, {when}.',
       cardPinned: 'Fixado em {b}: {r}',
+      machinesTitle: 'Máquinas e seus mundos',
+      machineWorld: '{id} · {b} · {mark}',
+      machineEmpty: 'Sem mundos.',
+      marks: { current: 'Em dia', behind: 'Atrasado', pinned: 'Fixado', other: 'Outro motor' },
+      brought: 'O que trouxe',
+      kinds: { major: 'Mudanças grandes', minor: 'Novas funções', patch: 'Correções' },
     },
     steps: {
       signing: 'Sua carteira pede que você assine…',

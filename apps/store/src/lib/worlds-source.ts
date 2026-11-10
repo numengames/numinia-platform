@@ -28,6 +28,9 @@ import {
 
 type Fetch = typeof fetch;
 
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 // ---------------------------------------------------------------------------
 // The Numinia Engine's newest build, as its latest GitHub release says
 // ---------------------------------------------------------------------------
@@ -40,6 +43,8 @@ type Fetch = typeof fetch;
 export const ENGINE_RELEASE_URL =
   'https://github.com/numengames/numinia-engine/releases/latest/download/imagen.json';
 /** How long an answer is kept: a found build a few minutes, a missing or unreadable one one minute. */
+export const ENGINE_NOTES_URL =
+  'https://github.com/numengames/numinia-engine/releases/latest/download/novedades.json';
 export const ENGINE_RELEASE_TTL_MS = 5 * 60_000;
 export const ENGINE_RELEASE_RETRY_MS = 60_000;
 
@@ -63,13 +68,21 @@ export async function latestEngine(
     const ttl = engineRelease.release === null ? ENGINE_RELEASE_RETRY_MS : ENGINE_RELEASE_TTL_MS;
     if (nowMs - engineRelease.at < ttl) return engineRelease.release;
   }
-  let release: EngineRelease | null = null;
-  try {
-    const response = await fetchImpl(ENGINE_RELEASE_URL, {
+  const get = async (url: string): Promise<unknown> => {
+    const response = await fetchImpl(url, {
       headers: { accept: 'application/json', 'user-agent': 'numinia-worlds-room' },
       signal: AbortSignal.timeout(timeoutMs),
     });
-    if (response.ok) release = readEngineRelease(await response.json());
+    return response.ok ? await response.json() : null;
+  };
+  let release: EngineRelease | null = null;
+  try {
+    // The notes are a courtesy: a release without them (or an unreadable file) keeps the build line.
+    const [image, notes] = await Promise.all([
+      get(ENGINE_RELEASE_URL),
+      get(ENGINE_NOTES_URL).catch(() => null),
+    ]);
+    if (isObject(image)) release = readEngineRelease({ ...image, notes });
   } catch {
     release = null;
   }
