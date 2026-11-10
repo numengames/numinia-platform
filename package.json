@@ -40,9 +40,9 @@
     "@resvg/resvg-js": "^2.6.2",
     "@secretlint/secretlint-rule-preset-recommend": "^13.1.0",
     "esbuild": "^0.28.2",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "fflate": "^0.8.3",
-    "knip": "^6.44.0",
+    "knip": "^6.44.1",
     "license-checker-rseidelsohn": "^5.0.1",
     "playwright": "^1.64.1",
     "prettier": "^3.9.10",
@@ -51,7 +51,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.1",
     "wawoff2": "^2.0.1",
-    "wrangler": "^4.156.0"
+    "wrangler": "^4.156.2"
   },
   "overrides": {
     "axios": "^1.21.0",
