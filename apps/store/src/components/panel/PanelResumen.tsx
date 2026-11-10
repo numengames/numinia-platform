@@ -44,6 +44,7 @@ import {
   type NextEncounter,
 } from '../../lib/panel-summary';
 import { runwayOf } from '../../lib/saldo-view';
+import { styleRef } from '../../lib/style-ref';
 import { LunaEspera } from '../chrome/LunaEspera';
 import { PanelFrame, type PanelContext } from './PanelFrame';
 import { PanelGlyph } from './PanelGlyph';
@@ -266,7 +267,7 @@ function Glance({
                       <span key={role.id} className="saldo-chip" data-summary-role>
                         <span
                           className="saldo-punto-rol"
-                          style={role.color === null ? undefined : { background: role.color }}
+                          ref={styleRef({ background: role.color })}
                           aria-hidden="true"
                         />
                         {role.name} · {role.members}

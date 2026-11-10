@@ -79,7 +79,7 @@ const price = formatEur(pass.priceEur, intl);
     <p class="letra" data-signin-hint>{s.signIn}</p>
 
     <div class="pista" role="region" aria-label={season.name[locale]} tabindex="0">
-      <ol class="rejilla" style={`--n:${total}`}>
+      <ol class="rejilla" data-style={JSON.stringify({ '--n': String(total) })}>
         {
           doors.map((door, i) => {
             const free = rewardOn(door, 'free');

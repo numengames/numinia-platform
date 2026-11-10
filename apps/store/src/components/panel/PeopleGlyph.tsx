@@ -7,7 +7,7 @@
  * share the frame, carry none of them.
  */
 
-import type { CSSProperties } from 'react';
+import { iconoClass, type IconoSize } from '../../lib/icono-size';
 import crown from '../../../../../packages/ui/src/icons/crown.svg?raw';
 import dotsThree from '../../../../../packages/ui/src/icons/dots-three.svg?raw';
 import lockKey from '../../../../../packages/ui/src/icons/lock-key.svg?raw';
@@ -33,13 +33,11 @@ export function PeopleGlyph({
   size = 16,
 }: {
   readonly name: keyof typeof GLYPHS;
-  readonly size?: number;
+  readonly size?: IconoSize;
 }) {
-  const style = { '--icono-size': `${size}px` } as CSSProperties;
   return (
     <span
-      className="icono"
-      style={style}
+      className={iconoClass(size)}
       aria-hidden="true"
       dangerouslySetInnerHTML={{ __html: GLYPHS[name] }}
     />

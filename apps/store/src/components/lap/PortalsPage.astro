@@ -56,7 +56,10 @@ const byDistrict: ReadonlyArray<{
         DISTRICTS.map((district) => (
           <p
             class="etiqueta distrito"
-            style={`left:${district.id === 'vitruvian' || district.id === 'solomon' ? 25 : 75}%; top:${district.id === 'vitruvian' || district.id === 'sycamore' ? 4 : 56}%`}
+            data-style={JSON.stringify({
+              left: `${district.id === 'vitruvian' || district.id === 'solomon' ? 25 : 75}%`,
+              top: `${district.id === 'vitruvian' || district.id === 'sycamore' ? 4 : 56}%`,
+            })}
           >
             {district.name[locale]}
           </p>
@@ -66,14 +69,14 @@ const byDistrict: ReadonlyArray<{
         PORTALS.map((portal) => (
           <span
             class={`nodo${portal.worldUrl ? '' : ' apagado'}`}
-            style={`left:${portal.mapPosition.x}%; top:${portal.mapPosition.y}%`}
+            data-style={JSON.stringify({ left: `${portal.mapPosition.x}%`, top: `${portal.mapPosition.y}%` })}
           >
             <span class="punto" />
             {portal.name[locale]}
           </span>
         ))
       }
-      <span class="nodo hub" style={`left:${AGORA_PLAZA.mapPosition.x}%; top:${AGORA_PLAZA.mapPosition.y}%`}>
+      <span class="nodo hub" data-style={JSON.stringify({ left: `${AGORA_PLAZA.mapPosition.x}%`, top: `${AGORA_PLAZA.mapPosition.y}%` })}>
         <span class="punto" />
         {AGORA_PLAZA.name[locale]}
       </span>

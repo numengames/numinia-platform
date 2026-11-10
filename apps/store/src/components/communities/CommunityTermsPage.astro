@@ -67,8 +67,8 @@ const title = fill(ui.title, { x: community.name });
         <>
           <section class="tarjeta terms-fixed" data-terms-fixed>
             <span class="chip ambar">{ui.fixed.label}</span>
-            <p style="margin: var(--s3) 0 0">{ui.fixed.text}</p>
-            <p style="margin: var(--s3) 0 0">
+            <p class="u-m-t-s3">{ui.fixed.text}</p>
+            <p class="u-m-t-s3">
               <a href={numiniaTermsPath(locale)}>{fill(ui.fixed.link, { version: LEGAL_DOC_VERSION.terms })}</a>
             </p>
           </section>
@@ -83,7 +83,7 @@ const title = fill(ui.title, { x: community.name });
                 </p>
               ) : (
                 <>
-                  <p class="small texto-2" style="margin: 0 0 var(--s4)" data-terms-in-force>
+                  <p class="small texto-2 u-m-b-s4" data-terms-in-force>
                     {fill(ui.own.inForce, { version: current.version, date: dayOf(current.publishedAt) })}
                   </p>
                   <ol class="terms-points">

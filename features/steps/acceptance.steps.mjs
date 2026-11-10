@@ -1144,7 +1144,7 @@ Then(
   async function () {
     const page = (id) =>
       readFile(path.join(this.distDir, 'es', 'communities', id, 'index.html'), 'utf8');
-    const crane = /class="icono grua"/;
+    const crane = /class="icono(?: icono-\d+)? grua"/;
     // VIC's home is in the fleet: the block enters it and counts who is inside.
     const vic = spacePiece(await page('vic'), 'home');
     assert.equal(vic?.state, 'world', 'vic: no home in the block');

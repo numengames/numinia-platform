@@ -45,12 +45,17 @@ export const KIND_GLYPH: Readonly<Record<AssetCategory, GlyphName>> = {
   images: 'imageSquare',
 };
 
-export function Glyph({ name, size = 18 }: { name: GlyphName; size?: number }) {
+export function Glyph({
+  name,
+  size = 18,
+}: {
+  name: GlyphName;
+  size?: 12 | 14 | 16 | 18 | 36 | 48;
+}) {
   return (
     <span
-      className="glyph"
+      className={`glyph glyph-${size}`}
       aria-hidden="true"
-      style={{ width: size, height: size }}
       dangerouslySetInnerHTML={{ __html: GLYPHS[name] }}
     />
   );

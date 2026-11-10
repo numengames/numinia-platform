@@ -116,7 +116,7 @@ const pct = Math.round((stats.redundancy.redundant / Math.max(1, stats.total)) *
           aria-valuemax="100"
           aria-label={t.stats.redundancy}
         >
-          <span style={`width:${pct}%`}></span>
+          <span data-style={JSON.stringify({ width: `${pct}%` })}></span>
         </div>
         <span class="mono pctcifra">{pct}%</span>
       </div>

@@ -6,7 +6,7 @@
  * Icon.astro, so this is its React twin for the few icons the panel draws.
  */
 
-import type { CSSProperties } from 'react';
+import { iconoClass, type IconoSize } from '../../lib/icono-size';
 import buildings from '../../../../../packages/ui/src/icons/buildings.svg?raw';
 import calendarBlank from '../../../../../packages/ui/src/icons/calendar-blank.svg?raw';
 import caretDown from '../../../../../packages/ui/src/icons/caret-down.svg?raw';
@@ -133,13 +133,11 @@ export function PanelGlyph({
   size = 20,
 }: {
   readonly name: keyof typeof GLYPHS;
-  readonly size?: number;
+  readonly size?: IconoSize;
 }) {
-  const style = { '--icono-size': `${size}px` } as CSSProperties;
   return (
     <span
-      className="icono"
-      style={style}
+      className={iconoClass(size)}
       aria-hidden="true"
       dangerouslySetInnerHTML={{ __html: GLYPHS[name] }}
     />

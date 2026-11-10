@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { styleRef } from '../../../lib/style-ref';
 import type { PricesRoomMessages } from '../../../i18n/prices';
 import {
   DAYS_PER_MONTH,
@@ -854,7 +855,7 @@ export function Market({
                     </a>
                   )}
                   <span className="barra" aria-hidden="true">
-                    <span style={{ width: `${Math.max(2, (row.eur / top) * 100)}%` }} />
+                    <span ref={styleRef({ width: `${Math.max(2, (row.eur / top) * 100)}%` })} />
                   </span>
                 </td>
                 <td className="num mono">{formatMoney(row.eur, lang)}</td>
