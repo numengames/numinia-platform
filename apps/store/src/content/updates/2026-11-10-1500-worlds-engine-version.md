@@ -1,0 +1,1 @@
+- NEW — The Worlds room names the newest engine by its version beside its build, lists every open machine with its worlds marked up to date, behind, pinned or another engine, and opens a fold with what that version brought.

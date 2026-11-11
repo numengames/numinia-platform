@@ -103,6 +103,26 @@ test.describe('the worlds room pins a world to a build', () => {
     await page.goto(`${origin}${ROOM()}`);
     const banner = page.locator('[data-fleet-engine]');
     await expect(banner).toBeVisible();
+    await expect(banner).toHaveAttribute('data-engine-version', '0.106.0');
+    await expect(banner).toContainText('0.106.0 · 0d15ea5 2026-10-16');
+    const machine = page.locator('[data-engine-machine="bronte-xs-ca-003"]');
+    await expect(machine.locator('[data-engine-world="atrium"]')).toHaveAttribute(
+      'data-mark',
+      'behind',
+    );
+    await expect(machine.locator('[data-engine-world="lantern-hall"]')).toHaveAttribute(
+      'data-mark',
+      'pinned',
+    );
+    await expect(
+      page.locator('[data-engine-machine="open-1"] [data-mark="other"]'),
+    ).not.toHaveCount(0);
+    const brought = page.locator('[data-engine-notes]');
+    await brought.locator('summary').click();
+    await expect(brought.locator('[data-notes-kind="minor"]')).toContainText(
+      'Art Gallery template',
+    );
+    await expect(brought.locator('[data-notes-kind="patch"]')).toContainText('Blows have weight');
     await expect(page.locator('[data-pinned-world="lantern-hall"]')).toContainText(
       'client demo until Friday',
     );

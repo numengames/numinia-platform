@@ -9,6 +9,7 @@ import type { WorldOrder } from '../worlds';
 import {
   ENGINE_RELEASE_RETRY_MS,
   ENGINE_RELEASE_TTL_MS,
+  ENGINE_NOTES_URL,
   ENGINE_RELEASE_URL,
   askAddress,
   checkAddress,
@@ -256,11 +257,46 @@ describe('latestEngine — the Numinia Engine’s newest build, from its release
     forgetEngineRelease();
     const { fetch, calls } = fakeFetch(() => ok(RELEASE));
     expect(await latestEngine(fetch, 1_000)).toEqual(RELEASE);
-    expect(calls.map((call) => call.url)).toEqual([ENGINE_RELEASE_URL]);
+    expect(calls.map((call) => call.url).sort()).toEqual([ENGINE_RELEASE_URL, ENGINE_NOTES_URL]);
     expect(await latestEngine(fetch, 1_000 + ENGINE_RELEASE_TTL_MS - 1)).toEqual(RELEASE);
-    expect(calls).toHaveLength(1);
-    expect(await latestEngine(fetch, 1_000 + ENGINE_RELEASE_TTL_MS)).toEqual(RELEASE);
     expect(calls).toHaveLength(2);
+    expect(await latestEngine(fetch, 1_000 + ENGINE_RELEASE_TTL_MS)).toEqual(RELEASE);
+    expect(calls).toHaveLength(4);
+  });
+
+  it('reads the version from imagen.json and the notes from novedades.json of the same release', async () => {
+    forgetEngineRelease();
+    const note = { kind: 'minor', title: 'A', text: 'Something new.', date: '2026-11-07' };
+    const { fetch } = fakeFetch((call) =>
+      call.url === ENGINE_NOTES_URL ? ok([note]) : ok({ ...RELEASE, version: '0.108.0' }),
+    );
+    expect(await latestEngine(fetch, 1_000)).toEqual({
+      ...RELEASE,
+      version: '0.108.0',
+      notes: [note],
+    });
+  });
+
+  it('keeps today’s line when novedades.json is missing, broken or not a list', async () => {
+    for (const notes of [
+      () => fail(404),
+      () => text('<html>'),
+      () => ok({ not: 'a list' }),
+      () => Promise.reject(new TypeError('dns')),
+    ]) {
+      forgetEngineRelease();
+      const { fetch } = fakeFetch((call) =>
+        call.url === ENGINE_NOTES_URL ? notes() : ok(RELEASE),
+      );
+      expect(await latestEngine(fetch, 1_000)).toEqual(RELEASE);
+    }
+  });
+
+  it('says none when imagen.json is not an object', async () => {
+    for (const body of [null, [RELEASE], 'x']) {
+      forgetEngineRelease();
+      expect(await latestEngine(fakeFetch(() => ok(body)).fetch, 1_000)).toBeNull();
+    }
   });
 
   it('says none while there is no release, or it cannot be read, and asks again after a minute', async () => {
@@ -274,9 +310,10 @@ describe('latestEngine — the Numinia Engine’s newest build, from its release
       const { fetch, calls } = fakeFetch(answer);
       expect(await latestEngine(fetch, 5_000)).toBeNull();
       expect(await latestEngine(fetch, 5_000 + ENGINE_RELEASE_RETRY_MS - 1)).toBeNull();
-      expect(calls).toHaveLength(1);
+      const asked = () => calls.filter((call) => call.url === ENGINE_RELEASE_URL).length;
+      expect(asked()).toBe(1);
       await latestEngine(fetch, 5_000 + ENGINE_RELEASE_RETRY_MS);
-      expect(calls).toHaveLength(2);
+      expect(asked()).toBe(2);
     }
     forgetEngineRelease();
     // With no clock given, now.

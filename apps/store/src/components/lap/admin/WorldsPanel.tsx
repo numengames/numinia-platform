@@ -55,6 +55,9 @@ import {
   fleetHomes,
   fleetServers,
   fleetEngine,
+  groupNotes,
+  machineMarks,
+  releaseLabel,
   pinnedWorlds,
   fleetStats,
   importMachines,
@@ -292,6 +295,7 @@ function FleetEngineBanner({
   const summary = fleetEngine(fleet.rows, fleet.machines, fleet.engine);
   const { current, laggards, otherEngine } = summary;
   const pinned = pinnedWorlds(fleet.rows);
+  const machines = machineMarks(fleet.rows, fleet.machines, fleet.engine);
   // Only the doors that publish the self-updating pass say anything here.
   const releases = fleet.machines.flatMap((machine) =>
     machine.open && machine.release !== undefined
@@ -303,12 +307,59 @@ function FleetEngineBanner({
       className="motor-flota"
       aria-label={text.title}
       data-fleet-engine={current === null ? '' : current.build}
+      data-engine-version={current?.version ?? ''}
       data-laggards={laggards.length}
     >
       <h2 className="etiqueta">{text.title}</h2>
       <p className="mono">
-        {current === null ? text.none : fill(text.current, { b: current.build })}
+        {current === null ? text.none : fill(text.current, { b: releaseLabel(current) })}
       </p>
+      {current?.notes !== undefined && (
+        <details className="motor-novedades" data-engine-notes={current.notes.length}>
+          <summary data-metric="worlds-engine-notes">{text.brought}</summary>
+          {groupNotes(current.notes).map((group) => (
+            <section key={group.kind} data-notes-kind={group.kind}>
+              <h3 className="etiqueta">{text.kinds[group.kind]}</h3>
+              <ul>
+                {group.notes.map((note) => (
+                  <li key={`${note.date}-${note.title}-${note.text.slice(0, 24)}`}>
+                    {note.title !== '' && <strong>{note.title}</strong>}
+                    {note.date !== '' && <span className="mono"> {note.date}</span>}
+                    <p>{note.text}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </details>
+      )}
+      {machines.length > 0 && (
+        <section aria-label={text.machinesTitle} data-engine-machines>
+          <h3 className="etiqueta">{text.machinesTitle}</h3>
+          {machines.map((machine) => (
+            <div key={machine.alias} data-engine-machine={machine.alias}>
+              <h4 className="mono">{machine.alias}</h4>
+              {machine.worlds.length === 0 ? (
+                <p className="nota-motor">{text.machineEmpty}</p>
+              ) : (
+                <ul>
+                  {machine.worlds.map((world) => (
+                    <li key={world.id} data-engine-world={world.id} data-mark={world.mark}>
+                      <span className="mono">
+                        {fill(text.machineWorld, {
+                          id: world.id,
+                          b: world.build,
+                          mark: text.marks[world.mark],
+                        })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
       {current !== null && laggards.length === 0 && <p role="status">{text.upToDate}</p>}
       {laggards.length > 0 && (
         <>

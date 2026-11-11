@@ -385,3 +385,29 @@ Then('every control of the cut carries a registered data-metric', async function
     assert.ok(CUT_METRICS.includes(match[1]), `${match[1]} is not in the cut's register`);
   }
 });
+
+When("the Oracle opens the Worlds room's data", async function () {
+  await ask(this, 'Oracle', '/api/admin/worlds');
+  assert.equal(this.reply.status, 200);
+});
+
+Then('the newest engine reads {string} with its build', function (version) {
+  const { engine } = this.reply.json;
+  assert.equal(engine.version, version);
+  assert.match(engine.build, /^[0-9a-f]{7} \d{4}-\d{2}-\d{2}$/);
+});
+
+Then('the newest engine brought notes of two kinds', function () {
+  const kinds = new Set(this.reply.json.engine.notes.map((note) => note.kind));
+  assert.deepEqual([...kinds].sort(), ['minor', 'patch']);
+});
+
+Then('every open machine lists its worlds, each marked', function () {
+  const { machines, rows } = this.reply.json;
+  const open = machines.filter((machine) => machine.open);
+  assert.ok(open.length >= 2, 'the fixture has at least two open machines');
+  for (const machine of open) {
+    const mine = rows.filter((row) => row.order?.server === machine.alias);
+    assert.ok(mine.length > 0, `${machine.alias} has worlds`);
+  }
+});
