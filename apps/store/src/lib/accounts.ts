@@ -26,6 +26,7 @@ import {
   type SupportedLocale,
 } from '@numinia/domain';
 import { localeHref } from './app-nav';
+import type { SafeSeat } from './safe-act-gate';
 import { isVocabulary } from './panel-settings';
 
 // ---- The contract with the till's desk (SPEC «AccountDesk methods») -------
@@ -311,6 +312,8 @@ export interface DeskSettings {
   vocabulary: 'simple' | 'mixed' | 'numinia';
   mayEdit: boolean;
   aiAgent: DeskAiAgent;
+  /** The Safe that leads the community (MIS-266), or null: the two owners. */
+  safe?: SafeSeat | null;
 }
 export type DeskSettingsAnswer = DeskSettings | DeskRefusal;
 export interface DeskSettingsChange {
@@ -1614,11 +1617,30 @@ export function readLog(json: unknown): DeskLogLine[] | null {
     : null;
 }
 
+/**
+ * The Safe as the till sent it: absent or null is the two owners (null); a
+ * Safe is its lower-case address and a positive chain id; anything else is
+ * undefined, and the whole answer is refused (fail closed).
+ */
+function readSafeSeat(value: unknown): SafeSeat | null | undefined {
+  if (value === undefined || value === null) return null;
+  if (!isRecord(value)) return undefined;
+  const { address, chainId } = value;
+  return typeof address === 'string' &&
+    /^0x[0-9a-f]{40}$/.test(address) &&
+    typeof chainId === 'number' &&
+    Number.isInteger(chainId) &&
+    chainId > 0
+    ? { address, chainId }
+    : undefined;
+}
+
 /** GET /api/saldo/settings: the settings of the organization, or null when the body is not that. */
 export function readSettings(json: unknown): DeskSettings | null {
   if (!isRecord(json) || !isRecord(json['settings'])) return null;
-  const { accountId, off, vocabulary, mayEdit, aiAgent } = json['settings'];
+  const { accountId, off, vocabulary, mayEdit, aiAgent, safe: sentSafe } = json['settings'];
   const brain = isRecord(aiAgent) ? aiAgent : null;
+  const safe = readSafeSeat(sentSafe);
   return typeof accountId === 'string' &&
     Array.isArray(off) &&
     off.every((piece) => typeof piece === 'string') &&
@@ -1628,7 +1650,8 @@ export function readSettings(json: unknown): DeskSettings | null {
     typeof brain['enabled'] === 'boolean' &&
     typeof brain['model'] === 'string' &&
     typeof brain['trialCapCents'] === 'number' &&
-    typeof brain['spentCents'] === 'number'
+    typeof brain['spentCents'] === 'number' &&
+    safe !== undefined
     ? {
         ok: true,
         accountId,
@@ -1641,6 +1664,7 @@ export function readSettings(json: unknown): DeskSettings | null {
           trialCapCents: brain['trialCapCents'],
           spentCents: brain['spentCents'],
         },
+        safe,
       }
     : null;
 }

@@ -374,7 +374,7 @@ describe('reading the answers in the browser', () => {
       mayEdit: false,
       aiAgent,
     };
-    expect(readSettings({ settings })).toEqual({ ok: true, ...settings });
+    expect(readSettings({ settings })).toEqual({ ok: true, ...settings, safe: null });
     for (const value of [
       null,
       {},
