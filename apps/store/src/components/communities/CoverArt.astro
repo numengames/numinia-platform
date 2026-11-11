@@ -20,7 +20,7 @@ const scene = coverScene(id, family);
 const mix = (depth: number): number => Math.round(34 - depth * 24);
 ---
 
-<div class="arte" data-cover-art={scene.kind} style={`--h: var(--${scene.hue})`} aria-hidden="true">
+<div class="arte" data-cover-art={scene.kind} data-hue={scene.hue} aria-hidden="true">
   <svg viewBox={`0 0 ${COVER_WIDTH} ${COVER_HEIGHT}`} preserveAspectRatio="xMidYMid slice" focusable="false">
     {scene.stars.map((star) => <circle class="estrella" cx={star.x} cy={star.y} r={star.r} />)}
     <circle class="halo" cx={scene.sun.cx} cy={scene.sun.cy} r={scene.sun.r * 1.9} />
@@ -39,7 +39,7 @@ const mix = (depth: number): number => Math.round(34 - depth * 24);
     <circle class="sol" cx={scene.sun.cx} cy={scene.sun.cy} r={scene.sun.r} />
     {
       scene.layers.map((layer) => (
-        <path d={layer.d} style={`fill: color-mix(in srgb, var(--h) ${mix(layer.depth)}%, var(--fondo))`} />
+        <path class={`capa capa-${mix(layer.depth)}`} d={layer.d} />
       ))
     }
     {scene.windows.map((spot) => <rect class="ventana" x={spot.x} y={spot.y} width="1.2" height="1.6" />)}
@@ -47,6 +47,32 @@ const mix = (depth: number): number => Math.round(34 - depth * 24);
 </div>
 
 <style>
+  /* Hue and layer tint are classes/attributes, never style attributes: the
+     CSP has no 'unsafe-inline' in style-src. mix() yields 34, 22 or 10. */
+  .arte[data-hue='turquesa'] {
+    --h: var(--turquesa);
+  }
+  .arte[data-hue='ambar'] {
+    --h: var(--ambar);
+  }
+  .arte[data-hue='coral'] {
+    --h: var(--coral);
+  }
+  .arte[data-hue='verdemar'] {
+    --h: var(--verdemar);
+  }
+  .arte[data-hue='grana'] {
+    --h: var(--grana);
+  }
+  .capa-34 {
+    fill: color-mix(in srgb, var(--h) 34%, var(--fondo));
+  }
+  .capa-22 {
+    fill: color-mix(in srgb, var(--h) 22%, var(--fondo));
+  }
+  .capa-10 {
+    fill: color-mix(in srgb, var(--h) 10%, var(--fondo));
+  }
   .arte {
     position: absolute;
     inset: 0;

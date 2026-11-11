@@ -9,17 +9,14 @@
 import type { SaldoMessages } from '../../i18n/saldo';
 import { shortWallet, type DeskMemberDetail } from '../../lib/accounts';
 import { shownOf } from '../../lib/panel-people';
+import { styleRef } from '../../lib/style-ref';
 import type { PeopleDesk } from './people-desk';
 import { PeopleGlyph } from './PeopleGlyph';
 
 /** A role's colour, as a dot beside its name — never as the colour of the text. */
 export function RoleDot({ color }: { readonly color: string | null }) {
   return (
-    <span
-      className="saldo-punto-rol"
-      aria-hidden="true"
-      style={color === null ? undefined : { background: color }}
-    />
+    <span className="saldo-punto-rol" aria-hidden="true" ref={styleRef({ background: color })} />
   );
 }
 
@@ -80,7 +77,7 @@ export function Person({
           {dot !== null && (
             <span
               className="saldo-punto-rol gente-punto"
-              style={{ background: dot }}
+              ref={styleRef({ background: dot })}
               aria-hidden="true"
               data-person-dot
             />

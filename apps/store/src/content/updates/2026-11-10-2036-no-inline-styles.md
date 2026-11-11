@@ -1,0 +1,1 @@
+- UPD — The pages no longer carry inline style attributes: sizes, spacing and colours come from the stylesheet, and the few computed values are set by script, so the security policy can refuse inline styles.

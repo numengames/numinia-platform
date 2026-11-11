@@ -46,7 +46,7 @@ const short = (name: string): string => name.split(' · ')[0] ?? name;
     <path class="aro" d={paths.back}></path>
     <path class="marcas" d={paths.backTicks}></path>
   </svg>
-  <div class="esfera-css" aria-hidden="true" style={`background-image:url(${ORACLE})`}></div>
+  <div class="esfera-css" aria-hidden="true"></div>
   <canvas class="esfera-gl" aria-hidden="true" data-src={ORACLE}></canvas>
   <svg class="anillo delante" viewBox={viewBox} aria-hidden="true" focusable="false">
     <path class="aro" d={paths.front}></path>
@@ -63,7 +63,7 @@ const short = (name: string): string => name.split(' · ')[0] ?? name;
                 'punto-com',
                 { detras: place.behind, oculto: place.hidden, izq: place.onLeft, frente: place.front },
               ]}
-              style={`left:${place.left}%;top:${place.top}%`}
+              data-style={JSON.stringify({ left: `${place.left}%`, top: `${place.top}%` })}
               data-dot={community.id}
             >
               <a
@@ -178,6 +178,7 @@ const short = (name: string): string => name.split(' · ')[0] ?? name;
     visibility: hidden;
   }
   .esfera-css {
+    background-image: url('/images/art/oracle.webp');
     background-size: cover;
     background-position: 50% 40%;
     box-shadow:

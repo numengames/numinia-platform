@@ -1314,3 +1314,99 @@ html[data-js='on'] .bocadillo:not([data-placed]) {
     display: block;
   }
 }
+
+/*
+ * Spacing utilities that replace former style="" attributes (CSP: style-src
+ * has no 'unsafe-inline'). !important keeps the weight an inline style had
+ * over component rules, so nothing moves.
+ */
+.u-m0 {
+  margin: 0 !important;
+}
+.u-m-t-s3 {
+  margin: var(--s3) 0 0 !important;
+}
+.u-m-t-s4 {
+  margin: var(--s4) 0 0 !important;
+}
+.u-m-b-s3 {
+  margin: 0 0 var(--s3) !important;
+}
+.u-m-b-s4 {
+  margin: 0 0 var(--s4) !important;
+}
+.u-m-s4-s8 {
+  margin: var(--s4) 0 var(--s8) !important;
+}
+.u-m-s2-s4 {
+  margin: var(--s2) 0 var(--s4) !important;
+}
+.u-mb-s4 {
+  margin-bottom: var(--s4) !important;
+}
+.u-mt-s5 {
+  margin-top: var(--s5) !important;
+}
+.u-mr-6 {
+  margin-right: 6px !important;
+}
+.u-block {
+  display: block !important;
+}
+
+/* The waiting moon (LunaEspera.tsx) sits in the text line. */
+.luna-espera {
+  display: inline-block;
+  vertical-align: -0.3em;
+}
+
+/* The 3D viewer (ModelViewer.tsx), formerly style attributes. */
+.viewer-figure {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+}
+/* The GL buffer stays 480²; CSS scales it into narrow viewports — a canvas
+   wider than the phone was the top responsive offender. */
+.viewer-stage {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+}
+.viewer-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.viewer-gone {
+  display: none !important;
+}
+.viewer-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  color: var(--texto-2);
+}
+.viewer-caption {
+  margin: 0;
+  color: var(--texto-2);
+  font-size: 0.875rem;
+  text-align: center;
+}
+.viewer-failure-text {
+  margin: 0;
+  color: var(--texto);
+}
+.btn.viewer-link {
+  text-decoration: none !important;
+}

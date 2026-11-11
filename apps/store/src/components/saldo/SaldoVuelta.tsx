@@ -24,9 +24,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
 import type { SaldoMessages } from '../../i18n/saldo';
 import { fill, formatEuros, readResult, vueltaParams } from '../../lib/accounts';
+import { styleRef } from '../../lib/style-ref';
 import {
   backTarget,
   readNote,
@@ -240,14 +240,12 @@ export function SaldoVuelta({
               <span
                 key={i}
                 className={`saldo-gracias-estrella saldo-gracias-${star.color}`}
-                style={
-                  {
-                    '--a': `${star.angle}deg`,
-                    '--d': `${star.distance}px`,
-                    '--s': `${star.size}px`,
-                    '--t': `${star.delay}ms`,
-                  } as CSSProperties
-                }
+                ref={styleRef({
+                  '--a': `${star.angle}deg`,
+                  '--d': `${star.distance}px`,
+                  '--s': `${star.size}px`,
+                  '--t': `${star.delay}ms`,
+                })}
               />
             ))}
           </div>

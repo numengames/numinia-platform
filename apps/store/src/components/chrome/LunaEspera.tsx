@@ -44,13 +44,7 @@ export function LunaEspera() {
 
   const current = PHASES[phase] ?? PHASES[4]!;
   return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 22 22"
-      aria-hidden="true"
-      style={{ display: 'inline-block', verticalAlign: '-0.3em' }}
-    >
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" className="luna-espera">
       <circle cx={CX} cy={CX} r={R} fill="none" stroke="currentColor" strokeOpacity="0.35" />
       {current.d && (
         <path

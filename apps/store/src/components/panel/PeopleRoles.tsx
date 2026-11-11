@@ -51,6 +51,7 @@ import {
   toggled,
   type PeopleAccess,
 } from '../../lib/panel-people';
+import { styleRef } from '../../lib/style-ref';
 import { LunaEspera } from '../chrome/LunaEspera';
 import { labelOf, usePeopleDesk, type PeopleDesk } from './people-desk';
 import { HouseStrip, PeopleNotices, Person, RoleDot, whoOf } from './PeopleBits';
@@ -133,7 +134,7 @@ function Look({
                 type="radio"
                 name="rol-color"
                 className="gente-muestra"
-                style={{ background: swatch }}
+                ref={styleRef({ background: swatch })}
                 checked={color === swatch}
                 disabled={!editable}
                 onChange={() => setColor(swatch)}

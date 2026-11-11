@@ -55,7 +55,7 @@ const rankNames = Object.fromEntries(RANK_DEFINITIONS.map((rank) => [rank.id, ra
     class="velo"
     data-sign-in-door
     data-home={homeHref}
-    style={`--door-google: ${JSON.stringify(copy.google)}`}
+    data-style={JSON.stringify({ '--door-google': JSON.stringify(copy.google) })}
   >
     <section
       class="puerta"
@@ -89,7 +89,7 @@ const rankNames = Object.fromEntries(RANK_DEFINITIONS.map((rank) => [rank.id, ra
         rankNames={rankNames}
         profileHref={localeHref(locale, '/lap/')}
         homeHref={homeHref}
-        client:load
+        client:only="react"
       />
       <p class="legal" data-door-legal data-session-out>
         {legal.lead}<a

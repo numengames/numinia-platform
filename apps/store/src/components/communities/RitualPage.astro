@@ -245,7 +245,7 @@ const sourceDate = ritual.source
         </div>
         {
           (ritual.mode === 'online' || ritual.mode === 'mixed') && ritual.status !== 'held' && !world && (
-            <p class="small texto-2" style="margin: var(--s4) 0 0">{ui.onlineNote}</p>
+            <p class="small texto-2 u-m-t-s4">{ui.onlineNote}</p>
           )
         }
       </section>
@@ -259,7 +259,7 @@ const sourceDate = ritual.source
               ))}
             </ol>
             {ritual.source && (
-              <p class="small texto-2" style="margin: var(--s4) 0 0">
+              <p class="small texto-2 u-m-t-s4">
                 {fill(ui.readOn, { source: ritual.source.name, date: sourceDate })}
               </p>
             )}
@@ -270,7 +270,7 @@ const sourceDate = ritual.source
         ritual.status !== 'held' && (
           <section class="tarjeta">
             <h2 class="card-h2"><Icon name="scroll" size={20} />{ui.after}</h2>
-            <p class="texto-2" style="margin: 0">{ui.afterText}</p>
+            <p class="texto-2 u-m0">{ui.afterText}</p>
           </section>
         )
       }
@@ -289,14 +289,14 @@ const sourceDate = ritual.source
         inPerson && (
           <section class="tarjeta">
             <h2 class="card-h2"><Icon name="map-pin" size={20} />{ui.howToGetThere}</h2>
-            <p class="texto-2" style="margin: 0">{pick(ritual.where, locale)}</p>
+            <p class="texto-2 u-m0">{pick(ritual.where, locale)}</p>
           </section>
         )
       }
       {till === undefined && (
       <section class="tarjeta" data-session-ranks="oracle" hidden>
         <h2 class="card-h2"><Icon name="github-logo" size={20} />{ui.editRitual}</h2>
-        <p class="small texto-2" style="margin: 0 0 var(--s4)">{ui.editNote}</p>
+        <p class="small texto-2 u-m-b-s4">{ui.editNote}</p>
         <a
           class="btn btn-fantasma btn-sm"
           href={editHref('ritual', ritual.id)}

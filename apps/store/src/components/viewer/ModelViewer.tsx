@@ -11,7 +11,7 @@
  * loaded and showed nothing.
  */
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm';
@@ -33,38 +33,6 @@ interface ModelViewerProps {
 
 /** Vertical field of view; the canvas is square, so it is the horizontal one too. */
 const FOV = 30;
-
-const FIGURE: CSSProperties = { margin: 0, display: 'grid', gap: '0.5rem', width: '100%' };
-// The GL buffer stays 480²; CSS scales it into narrow viewports — a canvas
-// wider than the phone was the top responsive offender.
-const STAGE: CSSProperties = {
-  position: 'relative',
-  width: '100%',
-  maxWidth: 480,
-  aspectRatio: '1 / 1',
-  marginInline: 'auto',
-};
-const CANVAS: CSSProperties = { display: 'block', width: '100%', height: '100%' };
-const GONE: CSSProperties = { display: 'none' };
-const OVERLAY: CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '0.75rem',
-  margin: 0,
-  padding: '1rem',
-  textAlign: 'center',
-  color: 'var(--texto-2)',
-};
-const CAPTION: CSSProperties = {
-  margin: 0,
-  color: 'var(--texto-2)',
-  fontSize: '0.875rem',
-  textAlign: 'center',
-};
 
 /** Free what a loaded scene holds on the GPU: geometries, materials, textures. */
 function disposeTree(root: THREE.Object3D): void {
@@ -256,7 +224,7 @@ export function ModelViewer({ url, kind, labels, bytes = null }: ModelViewerProp
 
   if (!url) {
     return (
-      <p data-viewer-status="empty" style={CAPTION}>
+      <p data-viewer-status="empty" className="viewer-caption">
         {labels.empty}
       </p>
     );
@@ -269,38 +237,36 @@ export function ModelViewer({ url, kind, labels, bytes = null }: ModelViewerProp
 
   return (
     <figure
-      className="visor-3d"
+      className="visor-3d viewer-figure"
       data-viewer-status={status}
       data-viewer-loaded={shown ? 'true' : 'false'}
-      style={FIGURE}
     >
-      <div style={STAGE}>
+      <div className="viewer-stage">
         <canvas
           key={url}
           ref={canvasRef}
           width={480}
           height={480}
-          style={failed ? GONE : CANVAS}
+          className={failed ? 'viewer-gone' : 'viewer-canvas'}
           role="img"
           aria-label={labels.canvasLabel}
         />
         {status === 'loading' && (
-          <p role="status" style={OVERLAY}>
+          <p role="status" className="viewer-overlay">
             <LunaEspera />
             {share === null ? labels.loading : fill(labels.loadingShare, { percent: share })}
           </p>
         )}
         {failed && (
-          <div data-viewer-failure style={OVERLAY}>
-            <p style={{ margin: 0, color: 'var(--texto)' }}>{failure}</p>
+          <div data-viewer-failure className="viewer-overlay">
+            <p className="viewer-failure-text">{failure}</p>
             <a
-              className="btn btn-fantasma"
+              className="btn btn-fantasma viewer-link"
               href={url}
               download
               target="_blank"
               rel="noopener noreferrer"
               data-metric="viewer-download"
-              style={{ textDecoration: 'none' }}
             >
               {labels.downloadInstead}
             </a>
@@ -308,7 +274,7 @@ export function ModelViewer({ url, kind, labels, bytes = null }: ModelViewerProp
         )}
       </div>
       {shown && (
-        <figcaption style={CAPTION}>
+        <figcaption className="viewer-caption">
           {status === 'skeleton' ? labels.skeleton : labels.ready}
         </figcaption>
       )}

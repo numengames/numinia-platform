@@ -9,7 +9,7 @@
  * hover/focus — no new tooltip markup, no new JS.
  */
 
-import type { CSSProperties } from 'react';
+import { iconoClass, type IconoSize } from '../../../lib/icono-size';
 import arrowSquareOut from '../../../../../../packages/ui/src/icons/arrow-square-out.svg?raw';
 import arrowsClockwise from '../../../../../../packages/ui/src/icons/arrows-clockwise.svg?raw';
 import downloadSimple from '../../../../../../packages/ui/src/icons/download-simple.svg?raw';
@@ -39,13 +39,11 @@ export function WorldGlyph({
   size = 16,
 }: {
   readonly name: keyof typeof GLYPHS;
-  readonly size?: number;
+  readonly size?: IconoSize;
 }) {
-  const style = { '--icono-size': `${size}px` } as CSSProperties;
   return (
     <span
-      className="icono"
-      style={style}
+      className={iconoClass(size)}
       aria-hidden="true"
       dangerouslySetInnerHTML={{ __html: GLYPHS[name] }}
     />

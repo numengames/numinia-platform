@@ -207,6 +207,21 @@
   width: 14px;
   height: 14px;
 }
+/* The mode button shows the icon of the mode it switches TO; the bookmark
+   return link stays hidden until a bookmark exists (the script sets
+   data-shown). Classes, not style attributes: CSP style-src has no
+   'unsafe-inline'. */
+.codex:not(.nocturno) [data-ico-luna],
+.codex.nocturno [data-ico-sol] {
+  display: none;
+}
+.codex .chrome .cbtn[data-codex-volver] {
+  font-size: 0.64rem;
+  padding: 4px 10px;
+}
+.codex .chrome .cbtn[data-codex-volver]:not([data-shown]) {
+  display: none;
+}
 .codex .cbtn.tinta {
   background: var(--tinta);
   border-color: var(--tinta);
