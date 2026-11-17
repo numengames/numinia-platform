@@ -5,7 +5,7 @@
  * script fills, the name, who holds it, where, and how.
  */
 import type { Community, Ritual } from '../../lib/communities';
-import { pick, whenShort } from '../../lib/communities';
+import { pick, ritualEndMs, whenShort } from '../../lib/communities';
 import type { CommunitiesMessages } from '../../i18n/communities';
 import Icon from '../chrome/Icon.astro';
 import Cover from './Cover.astro';
@@ -22,6 +22,8 @@ interface Props {
 
 const { ritual, community, locale, prefix, ui, inCarousel = false } = Astro.props;
 const who = ritual.city ? ui.ofTheCity : community.name;
+/** An upcoming card goes once the ritual is over, even before the next build (Countdown.astro). */
+const until = ritual.status === 'upcoming' ? ritualEndMs(ritual) : undefined;
 const image = ritual.image ? { src: ritual.image.src, alt: pick(ritual.image.alt, locale) } : community.image ? { src: community.image.src, alt: pick(community.image.alt, locale) } : undefined;
 ---
 
@@ -29,13 +31,14 @@ const image = ritual.image ? { src: ritual.image.src, alt: pick(ritual.image.alt
   class:list={['tarjeta', 'rit', { carrusel: inCarousel }]}
   href={`${prefix}/rituals/${ritual.id}/`}
   data-metric="ritual-card"
+  data-until={until}
 >
   <Cover id={community.id} name={community.name} image={image} ritualMode={ritual.mode} />
   <div class="cuerpo">
     <span class="cuando">
       <Icon name="calendar-blank" size={14} />
       <span>{whenShort(ritual, locale)}</span>
-      <span class="falta" data-countdown={ritual.status === 'held' ? undefined : ritual.start} data-held={ritual.status === 'held' ? '' : undefined}></span>
+      <span class="falta" data-countdown={ritual.status === 'held' ? undefined : ritual.start} data-countdown-end={until} data-held={ritual.status === 'held' ? '' : undefined}></span>
     </span>
     <h3>{pick(ritual.title, locale)}</h3>
     <span class="de">{who}</span>

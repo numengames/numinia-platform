@@ -22,6 +22,7 @@ import {
   pick,
   pickList,
   placesLine,
+  ritualEndMs,
   sedeDomain,
   spanDays,
   whenLong,
@@ -149,7 +150,11 @@ const sourceDate = ritual.source
       <div class="fila">
         <span class="etiqueta">
           {whenLong(ritual, locale)}
-          <span class="falta" data-countdown={ritual.status === 'held' ? undefined : ritual.start}></span>
+          <span
+            class="falta"
+            data-countdown={ritual.status === 'held' ? undefined : ritual.start}
+            data-countdown-end={ritual.status === 'held' ? undefined : ritualEndMs(ritual)}
+          ></span>
         </span>
         {ritual.mode && <span class="chip">{ui.modes[ritual.mode]}</span>}
         {ritual.city && <span class="chip ambar">{ui.ofTheCity}</span>}
@@ -167,7 +172,13 @@ const sourceDate = ritual.source
     </div>
     <div class="acciones-rit">
       {ritual.status !== 'held' && !cancelled && (
-        <RsvpAction locale={locale} ritualId={ritual.id} signIn={signIn} metric="ritual-rsvp" />
+        <RsvpAction
+          locale={locale}
+          ritualId={ritual.id}
+          signIn={signIn}
+          metric="ritual-rsvp"
+          until={ritualEndMs(ritual)}
+        />
       )}
       <a class="btn btn-fantasma" href={icsHref} data-metric="ritual-add-calendar">
         <Icon name="calendar-plus" size={18} />

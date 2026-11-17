@@ -14,6 +14,7 @@ import {
   parseCommunity,
   parseRitual,
   published,
+  settle,
   type Community,
   type Ritual,
 } from '../../lib/communities';
@@ -40,17 +41,20 @@ export const COMMUNITIES: readonly Community[] = published(REGISTER);
 const knownIds = new Set(REGISTER.map((community) => community.id));
 const publishedIds = new Set(COMMUNITIES.map((community) => community.id));
 
-/** The rituals of the published communities, by date. */
-export const RITUALS: readonly Ritual[] = Object.entries(ritualModules)
-  .map(([path, module]) => {
-    const ritual = parseRitual(idFromPath(path), module.frontmatter);
-    if (!knownIds.has(ritual.community)) {
-      throw new Error(`rituals/${ritual.id}.md: no community "${ritual.community}" on file`);
-    }
-    return ritual;
-  })
-  .filter((ritual) => publishedIds.has(ritual.community))
-  .sort(byStart);
+/** The rituals of the published communities, by date, as they stand at build (lib/communities settle). */
+export const RITUALS: readonly Ritual[] = settle(
+  Object.entries(ritualModules)
+    .map(([path, module]) => {
+      const ritual = parseRitual(idFromPath(path), module.frontmatter);
+      if (!knownIds.has(ritual.community)) {
+        throw new Error(`rituals/${ritual.id}.md: no community "${ritual.community}" on file`);
+      }
+      return ritual;
+    })
+    .filter((ritual) => publishedIds.has(ritual.community))
+    .sort(byStart),
+  new Date(),
+);
 
 export function communityOf(id: string): Community {
   const community = COMMUNITIES.find((entry) => entry.id === id);

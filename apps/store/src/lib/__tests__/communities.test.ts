@@ -44,6 +44,7 @@ import {
   placesLine,
   published,
   ritualEndMs,
+  settle,
   ritualStartMs,
   ritualsOf,
   searchText,
@@ -506,6 +507,28 @@ describe('order and lookup', () => {
     expect(nextRitualOf('commit-conf', [a, b, past])).toBeUndefined();
   });
 
+  it('settles what ended: an upcoming ritual past its end counts as held, nothing else moves', () => {
+    const trg = ritual(); // whole days, 22–24 Oct 2026: over at 25 Oct 00:00 UTC
+    const timed = parseRitual('merge-madrid-2026', {
+      ...RITUAL,
+      community: 'merge',
+      start: '2026-10-27T09:00:00Z',
+      end: '2026-10-27T18:00:00Z',
+    });
+    const marked = parseRitual('vic-2025', {
+      ...RITUAL,
+      start: '2025-06-16',
+      end: '2025-07-07',
+      status: 'held',
+    });
+    const during = settle([trg, timed, marked], new Date('2026-10-24T23:59:59Z'));
+    expect(during.map((entry) => entry.status)).toEqual(['upcoming', 'upcoming', 'held']);
+    const after = settle([trg, timed, marked], new Date('2026-10-27T18:00:00Z'));
+    expect(after.map((entry) => entry.status)).toEqual(['held', 'held', 'held']);
+    expect(after[2]).toBe(marked);
+    expect(upcoming(after)).toEqual([]);
+  });
+
   it('lists the communities with life by their nearest ritual, published only', () => {
     const merge = parseCommunity('merge', { ...COMMUNITY, name: 'MERGE' });
     const hidden = parseCommunity('cps', { ...COMMUNITY, name: 'CPS', visibility: 'house' });
@@ -859,11 +882,20 @@ describe('the calendar', () => {
     expect(months[2]!.label).toBe('January 2027');
   });
 
-  it('starts at the first upcoming ritual, or at the fallback', () => {
-    expect(firstMonth([anniversary, trg], { year: 2026, month: 1 })).toEqual({
+  it('starts at the earlier of the first upcoming ritual and the floor month', () => {
+    // First ritual (October 2026) before the floor: it wins.
+    expect(firstMonth([anniversary, trg], { year: 2026, month: 12 })).toEqual({
       year: 2026,
       month: 10,
     });
+    // First ritual after the floor: the grid still starts at the floor, so
+    // anything published for the coming days has its cell.
+    expect(firstMonth([anniversary, trg], { year: 2026, month: 1 })).toEqual({
+      year: 2026,
+      month: 1,
+    });
+    expect(firstMonth([trg], { year: 2025, month: 12 })).toEqual({ year: 2025, month: 12 });
+    // Nothing upcoming: the floor.
     expect(firstMonth([ritual({ status: 'held' })], { year: 2026, month: 1 })).toEqual({
       year: 2026,
       month: 1,

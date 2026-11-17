@@ -226,9 +226,14 @@ test('the month grid of /calendar/ hangs it on its day; the live feed carries it
   expect(live.headers()['content-type']).toContain('text/calendar');
   const feed = await live.text();
   expect(feed).toContain(`SUMMARY:${TITLE}`);
-  expect(feed).toContain('SUMMARY:TRG26');
   const built = await page.request.get(`${origin}/calendar.ics`);
-  expect(await built.text()).not.toContain(`SUMMARY:${TITLE}`);
+  const builtFeed = await built.text();
+  expect(builtFeed).not.toContain(`SUMMARY:${TITLE}`);
+  // The live feed carries what the built one does (the upcoming rituals, which
+  // move with the date) plus the published one.
+  const summaries = builtFeed.match(/^SUMMARY:.+$/gm) ?? [];
+  expect(summaries.length).toBeGreaterThan(0);
+  for (const summary of summaries) expect(feed).toContain(summary);
 });
 
 test('a phone of 390 shows the grid with it', async ({ page }) => {

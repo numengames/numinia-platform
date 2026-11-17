@@ -27,7 +27,11 @@ const { locale } = Astro.props;
 const ui = COMMUNITIES_UI[locale];
 const prefix = locale === 'en' ? '' : `/${locale}`;
 const coming = upcoming(RITUALS);
-const from = firstMonth(coming, { year: 2026, month: 10 });
+const today = new Date();
+const from = firstMonth(coming, {
+  year: today.getUTCFullYear(),
+  month: today.getUTCMonth() + 1,
+});
 const months = calendarMonths(from, monthsToCover(from, coming, 4), coming, locale);
 ---
 

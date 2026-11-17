@@ -26,9 +26,11 @@ interface Props {
   metric: string;
   /** The front page's big button. */
   large?: boolean;
+  /** When the ritual ends (ms): the button goes then, even before the next build (Countdown.astro). */
+  until?: number;
 }
 
-const { locale, ritualId, signIn, metric, large = false } = Astro.props;
+const { locale, ritualId, signIn, metric, large = false, until } = Astro.props;
 const words = AGENDA_UI[locale];
 const carried = {
   signMeUp: words.signMeUp,
@@ -46,6 +48,7 @@ const carried = {
   href={signIn}
   data-session-out
   data-metric={`${metric}-sign-in`}
+  data-until={until}
 >
   <Icon name="check-circle" size={large ? 20 : 18} />
   {words.signMeUp}
@@ -58,6 +61,7 @@ const carried = {
   aria-pressed="false"
   data-session-in
   data-metric={metric}
+  data-until={until}
   hidden
 >
   <Icon name="check-circle" size={large ? 20 : 18} />

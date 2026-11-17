@@ -462,6 +462,22 @@ export function byStart(a: Ritual, b: Ritual): number {
   return ritualStartMs(a) - ritualStartMs(b) || a.id.localeCompare(b.id);
 }
 
+/**
+ * The rituals as they stand at `now`: one still marked upcoming whose end has
+ * passed counts as held. The file's mark waits for the house's chronicle; the
+ * calendar does not, so nothing over is ever offered as still to come. The
+ * pages are built ahead, so the reader's browser repeats this check between
+ * deploys (Countdown.astro hides whatever carries `data-until` once it ends).
+ */
+export function settle(rituals: readonly Ritual[], now: Date): readonly Ritual[] {
+  const at = now.getTime();
+  return rituals.map((ritual) =>
+    ritual.status === 'upcoming' && ritualEndMs(ritual) <= at
+      ? { ...ritual, status: 'held' }
+      : ritual,
+  );
+}
+
 /** Upcoming rituals, the nearest first. */
 export function upcoming(rituals: readonly Ritual[]): readonly Ritual[] {
   return rituals.filter((ritual) => ritual.status === 'upcoming').sort(byStart);
@@ -947,15 +963,22 @@ export function calendarMonths(
   return months;
 }
 
-/** The month that holds the first upcoming ritual, or the given fallback. */
+/**
+ * Where the month grid starts: the month that holds the first upcoming
+ * ritual, but never later than `floor` (the build's current month). A grid
+ * that began at the first scheduled ritual hid anything happening before it,
+ * such as an encounter published live for the coming days.
+ */
 export function firstMonth(
   rituals: readonly Ritual[],
-  fallback: { readonly year: number; readonly month: number },
+  floor: { readonly year: number; readonly month: number },
 ): { readonly year: number; readonly month: number } {
   const first = upcoming(rituals)[0];
-  if (!first) return fallback;
+  if (!first) return floor;
   const start = dayOf(first, 'start');
-  return { year: start.getUTCFullYear(), month: start.getUTCMonth() + 1 };
+  const year = start.getUTCFullYear();
+  const month = start.getUTCMonth() + 1;
+  return year * 12 + month < floor.year * 12 + floor.month ? { year, month } : floor;
 }
 
 /**

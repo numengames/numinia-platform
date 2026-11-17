@@ -10,7 +10,7 @@
 import { AGORA_PLAZA, type SupportedLocale } from '@numinia/domain';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { COMMUNITIES_UI } from '../../i18n/communities';
-import { dayAndMonth, pick, sedeDomain, upcoming, worldOf } from '../../lib/communities';
+import { dayAndMonth, pick, ritualEndMs, sedeDomain, upcoming, worldOf } from '../../lib/communities';
 import { COMMUNITIES, RITUALS, communityOf } from './register';
 import Icon from '../chrome/Icon.astro';
 import Countdown from './Countdown.astro';
@@ -134,7 +134,7 @@ const homes = COMMUNITIES.flatMap((community) => {
             const date = dayAndMonth(ritual, locale);
             const community = communityOf(ritual.community);
             return (
-              <li>
+              <li data-until={ritualEndMs(ritual)}>
                 <span class="fecha">
                   <b>{date.day}</b>
                   {date.month}
@@ -147,7 +147,7 @@ const homes = COMMUNITIES.flatMap((community) => {
                   </h3>
                   <p>
                     {ritual.city ? ui.ofTheCity : community.name} · {pick(ritual.where, locale)}
-                    <span class="falta" data-countdown={ritual.start} />
+                    <span class="falta" data-countdown={ritual.start} data-countdown-end={ritualEndMs(ritual)} />
                   </p>
                 </div>
               </li>

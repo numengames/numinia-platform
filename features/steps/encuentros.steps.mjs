@@ -1,8 +1,10 @@
 /**
  * Step definitions for «Encuentros» (features/encuentros.feature, v3 lane 2):
  * the built /calendar/ pages read as HTML. The upcoming encounters are taken
- * from the register's own files (status not «held»), so a new file in
- * src/content/communities/rituals/ is checked without touching this file.
+ * from the register's own files (status not «held», and its end not yet past:
+ * the build settles one whose end passed, lib/communities.ts `settle`), so a
+ * new file in src/content/communities/rituals/ is checked without touching
+ * this file and the check does not age.
  * Kept apart so the shared acceptance.steps.mjs stays untouched.
  */
 import { strict as assert } from 'node:assert';
@@ -17,14 +19,23 @@ const ritualsDir = fileURLToPath(
 );
 const PREFIXES = ['', 'es', 'ja', 'ko', 'pt-br'];
 
+/** The instant a ritual file is over: the day after its last day, or its end. */
+function endMs(front) {
+  const start = String(front.start);
+  const end = String(front.end ?? front.start);
+  return /^\d{4}-\d{2}-\d{2}$/.test(start)
+    ? Date.parse(`${end}T00:00:00Z`) + 86_400_000
+    : Date.parse(end);
+}
+
 /** The upcoming encounters on file, nearest first: [id, start]. */
-async function upcomingOnFile() {
+export async function upcomingOnFile(now = Date.now()) {
   const files = (await readdir(ritualsDir)).filter((file) => file.endsWith('.md'));
   const rows = [];
   for (const file of files) {
     const text = await readFile(path.join(ritualsDir, file), 'utf8');
     const front = parseYaml(text.split(/^---$/m)[1]);
-    if (front.status === 'held') continue;
+    if (front.status === 'held' || endMs(front) <= now) continue;
     rows.push([file.replace(/\.md$/, ''), String(front.start)]);
   }
   return rows.sort((a, b) => a[1].localeCompare(b[1]) || a[0].localeCompare(b[0]));

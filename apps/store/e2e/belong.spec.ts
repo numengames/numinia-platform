@@ -171,14 +171,21 @@ test.describe('signed in', () => {
     const followed = page.locator(follow);
     await expect(followed).toHaveCount(1);
     await expect(followed.locator('h3 a')).toHaveAttribute('href', `/es/communities/${MERGE}/`);
-    await expect(followed.locator('[data-line]')).toHaveText(
-      /^La sigues · próximo: MERGE Madrid 2026, /,
-    );
-    await expect(followed.locator('[data-see-ritual]')).toHaveAttribute(
-      'href',
-      '/es/rituals/merge-madrid-2026/',
-    );
-    await expect(followed.locator('[data-see-ritual]')).toHaveText('Ver el encuentro');
+    // MERGE's next encounter moves with the clock (an ended one is held, not
+    // next): with one ahead the line names it and the door leads to it; with
+    // none ahead the line says so and there is no door.
+    const line = followed.locator('[data-line]');
+    if ((await followed.locator('[data-see-ritual]').count()) > 0) {
+      await expect(line).toHaveText(/^La sigues · próximo: MERGE /);
+      await expect(followed.locator('[data-see-ritual]')).toHaveAttribute(
+        'href',
+        /^\/es\/rituals\/merge-/,
+      );
+      await expect(followed.locator('[data-see-ritual]')).toHaveText('Ver el encuentro');
+    } else {
+      await expect(line).toHaveText(/^La sigues · /);
+      await expect(line).not.toHaveText(/próximo: /);
+    }
     await expect(followed.locator('[data-metric="belong-unfollow"]')).toBeVisible();
     await expect(page.locator('[data-belong-follow-empty]')).toBeHidden();
     await expect(page.locator('[data-metric="belong-find-more"]')).toHaveAttribute(

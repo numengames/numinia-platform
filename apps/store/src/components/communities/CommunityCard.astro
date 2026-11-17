@@ -4,7 +4,7 @@
  * where it is from, a line about it, its marks, and its next ritual.
  */
 import type { Community, Ritual } from '../../lib/communities';
-import { nextRitualOf, pick, placesLine, ritualsOf, held, whenShort, yearOf } from '../../lib/communities';
+import { nextRitualOf, pick, placesLine, ritualEndMs, ritualsOf, held, whenShort, yearOf } from '../../lib/communities';
 import { fill, type CommunitiesMessages } from '../../i18n/communities';
 import Icon from '../chrome/Icon.astro';
 import Cover from './Cover.astro';
@@ -26,9 +26,11 @@ const image = community.image ? { src: community.image.src, alt: pick(community.
 
 let footLine: string;
 let footCountdown: string | undefined;
+let footEnd: number | undefined;
 if (next) {
   footLine = `${ui.nextRitual}: ${pick(next.title, locale)} · ${whenShort(next, locale)}`;
   footCountdown = next.start;
+  footEnd = ritualEndMs(next);
 } else if (community.weekly.length > 0) {
   footLine = `${ui.weekly}: ${community.weekly.map((entry) => pick(entry.name, locale)).join(' · ')}`;
 } else if (last) {
@@ -61,7 +63,7 @@ if (next) {
     }
     <span class="pie">
       <Icon name="calendar-blank" size={14} />
-      <span>{footLine}<span class="falta" data-countdown={footCountdown}></span></span>
+      <span>{footLine}<span class="falta" data-countdown={footCountdown} data-countdown-end={footEnd}></span></span>
     </span>
   </div>
 </a>
