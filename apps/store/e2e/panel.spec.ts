@@ -189,21 +189,16 @@ test.describe('the door', () => {
     await signedIn(page, 'nomad', [PERSONAL]);
     await page.goto('/es/communities/');
     await page.locator('[data-metric="chrome-account"]').click();
-    const entries = page.locator('#menu-cara a.opc');
-    await expect(entries).toHaveCount(5);
+    // The menu's own rows (your places and «Crear» are `you-…`).
+    const entries = page.locator('#menu-cara a.opc[data-metric^="chrome-"]');
+    await expect(entries).toHaveCount(4);
     expect(
       await entries.evaluateAll((all) => all.map((a) => a.getAttribute('data-metric'))),
-    ).toEqual([
-      'chrome-profile',
-      'chrome-balance',
-      'chrome-panels',
-      'chrome-account-settings',
-      'chrome-sign-out',
-    ]);
+    ).toEqual(['chrome-profile', 'chrome-panels', 'chrome-account-settings', 'chrome-sign-out']);
     const door = page.locator('[data-metric="chrome-panels"]');
     await expect(door).toHaveText('Paneles');
     await expect(door).toHaveAttribute('href', '/es/panel/');
-    // The same icon your rail gives «Tus comunidades»: it is already in the page's sprite.
+    // The same icon your menu gives «Tus comunidades»: it is already in the page's sprite.
     await expect(door.locator('svg use')).toHaveAttribute('href', '#i-users-three');
   });
 

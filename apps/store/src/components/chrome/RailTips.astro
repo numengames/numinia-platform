@@ -40,7 +40,7 @@
       element.getBoundingClientRect(),
       { width: tip.offsetWidth, height: tip.offsetHeight },
       { width: innerWidth, height: innerHeight },
-      side,
+      element.hasAttribute('data-tip-below') ? 'below' : side,
     );
     tip.style.top = `${place.top}px`;
     tip.style.left = `${place.left}px`;
@@ -56,11 +56,24 @@
     else if (owner) later();
   });
   document.addEventListener('focusin', (event) => {
+    // A press focuses the button after its pointerdown: that is not a keyboard visit.
+    if (pressed) return;
     const element = tipped(event.target);
     if (element) show(element);
     else hide();
   });
   document.addEventListener('scroll', hide, { capture: true, passive: true });
+  // A click opens a menu under the button: the tooltip gives way to it.
+  let pressed = false;
+  document.addEventListener(
+    'pointerdown',
+    () => {
+      hide();
+      pressed = true;
+      window.setTimeout(() => (pressed = false), 150);
+    },
+    { capture: true, passive: true },
+  );
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && tip && !tip.hidden) hide();
   });

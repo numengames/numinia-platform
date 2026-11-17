@@ -24,6 +24,16 @@ describe('placeTip', () => {
     });
   });
 
+  it('your face: below it, centred, never past the window', () => {
+    const face = { top: 16, bottom: 60, left: 1500, right: 1544 };
+    expect(placeTip(face, { width: 80, height: 30 }, viewport, 'below')).toEqual({
+      top: 66,
+      left: 1482,
+    });
+    const edge = { top: 16, bottom: 60, left: 1550, right: 1594 };
+    expect(placeTip(edge, { width: 120, height: 30 }, viewport, 'below').left).toBe(1472);
+  });
+
   it('stays inside the window', () => {
     const top = { top: 0, bottom: 10, left: 1590, right: 1600 };
     expect(placeTip(top, { width: 120, height: 30 }, viewport, 'city')).toEqual({

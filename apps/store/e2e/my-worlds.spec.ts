@@ -145,11 +145,11 @@ test.describe('signed in', () => {
     // Only your communities: the ones the wallet is not in are not here.
     await expect(page.locator('[data-my-worlds-community]')).toHaveCount(1);
     await expect(page.locator('[data-my-worlds="empty"]')).toHaveCount(0);
-    // The rail's counter reads the same figure from the real API.
+    // The menu's counter reads the same figure from the real API.
     await expect(
-      page.locator('.rail-tu [data-metric="you-worlds"] [data-you-count="worlds"]'),
+      page.locator('#menu-cara [data-metric="you-worlds"] [data-you-count="worlds"]'),
     ).toHaveText('3');
-    await expect(page.locator('.rail-tu [data-metric="you-worlds"]')).toHaveAttribute(
+    await expect(page.locator('#menu-cara [data-metric="you-worlds"]')).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -191,7 +191,7 @@ test.describe('signed in', () => {
       '/es/mundos/',
     );
     await expect(page.locator('[data-world-card]')).toHaveCount(0);
-    // Never a «0» in the rail.
+    // Never a «0» in the menu.
     await expect(page.locator('[data-metric="chrome-account"]')).toBeVisible();
     await expect(page.locator('[data-you-count="worlds"]').first()).toBeHidden();
     const scan = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();

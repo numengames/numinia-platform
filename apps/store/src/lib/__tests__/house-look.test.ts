@@ -1,13 +1,13 @@
 /**
  * The house look — numinia.org leads the design (the Oracle, 2026-09-29),
- * and numinia.com wears it as an app: since v0.112.0 «La ciudad y tú», two
- * mirrored rails (the city on the left, you on the right).
+ * and numinia.com wears it as an app: «La ciudad y tú» — the city's rail on
+ * the left, you at the page's top right (a face that opens one menu).
  *
  * These checks pin the measurable part of the app shell in the sources, so
- * a later edit cannot drift back silently: the rails (sticky, 256 px or
- * 72 px folded, the Khepri with the wordmark on the city's, the folds
- * applied before paint, above the page), the mirror of position but not of
- * reading, the menus outside the rails, the phone's header, bottom bar and
+ * a later edit cannot drift back silently: the city rail (sticky, 256 px or
+ * 72 px folded, the Khepri with the wordmark, the fold applied before
+ * paint, above the page), your face's sticky band and its menu outside the
+ * flow, the rail's reading, the phone's header, bottom bar and
  * «Tú» sheet, the folded footer at the city's foot, the sprite, the page
  * at the full width, the night sky, the kit's entrance, primary button,
  * eyebrows and the two radii. Pixels stay with the Playwright gates; this
@@ -71,7 +71,7 @@ describe('the rails', () => {
     expect(rule(css, /\.rail-khepri/)).toMatch(/height:\s*36px/);
   });
 
-  it('are sticky, the window tall, 256 px or 72 px folded, one each side of the page', async () => {
+  it('the city rail is sticky, the window tall, 256 px or 72 px folded; you are a sticky band, not a column', async () => {
     const css = await read(SHELL);
     expect(css).toMatch(/--rail:\s*256px/);
     expect(css).toMatch(/--rail-plegada:\s*72px/);
@@ -80,26 +80,35 @@ describe('the rails', () => {
     expect(rail).toMatch(/height:\s*100vh/);
     expect(Number(/z-index:\s*(\d+)/.exec(rail)?.[1])).toBeGreaterThan(40);
     expect(rule(css, /\n\.app/)).toMatch(
-      /grid-template-columns:\s*var\(--rail-izq\) minmax\(0, 1fr\) var\(--rail-der\)/,
+      /grid-template-columns:\s*var\(--rail-izq\) minmax\(0, 1fr\);/,
     );
     expect(css).toMatch(
       /html\[data-rail-city='collapsed'\]\s*\{\s*--rail-izq:\s*var\(--rail-plegada\)/,
     );
-    expect(css).toMatch(
-      /html\[data-rail-you='collapsed'\]\s*\{\s*--rail-der:\s*var\(--rail-plegada\)/,
-    );
+    // No second rail: no right column, no fold for it.
+    expect(css).not.toContain('--rail-der');
+    expect(css).not.toContain('data-rail-you');
+    const band = rule(css, /\n\.cabeza-tu/);
+    expect(band).toMatch(/position:\s*sticky/);
+    expect(band).toMatch(/top:\s*0/);
+    expect(band).toMatch(/justify-content:\s*flex-end/);
+    expect(band).toMatch(/min-height:\s*56px/);
+    expect(Number(/z-index:\s*(\d+)/.exec(band)?.[1])).toBeGreaterThan(30);
   });
 
-  it('remember each fold on the device and apply it before the first paint', async () => {
+  it('remembers the city rail’s fold on the device and applies it before the first paint', async () => {
     const layout = await read(LAYOUT);
     const boot = /<script is:inline>([\s\S]*?)<\/script>/.exec(layout)?.[1] ?? '';
     expect(boot).toContain("localStorage.getItem('numinia-sidebar')");
     expect(boot).toContain("dataset.railCity = rail('city')");
-    expect(boot).toContain("dataset.railYou = rail('you')");
-    for (const src of [await read(CITY), await read(YOU)]) {
-      expect(src).toMatch(/class="rail-plegar"[\s\S]*?aria-expanded="true"/);
-      expect(src).toContain('<Icon name="sidebar-simple"');
-    }
+    expect(boot).not.toContain('railYou');
+    const city = await read(CITY);
+    expect(city).toMatch(/class="rail-plegar"[\s\S]*?aria-expanded="true"/);
+    expect(city).toContain('<Icon name="sidebar-simple"');
+    // What is yours has nothing to fold: it is a menu.
+    const you = await read(YOU);
+    expect(you).not.toContain('rail-plegar');
+    expect(you).not.toContain('data-rail-fold');
   });
 
   it('the city: search with «/», then its five places from lib/app-nav with their counts', async () => {
@@ -112,21 +121,46 @@ describe('the rails', () => {
     expect(src).toContain('communities: COMMUNITIES.length');
   });
 
-  it('yours: the door or your face, «Crear», then your places; the menus live outside the rail', async () => {
+  it('yours: the door and your face at the top right, one menu with what is yours and «Crear»', async () => {
     const src = await read(YOU);
+    expect(src).toMatch(
+      /<div class="cabeza-tu rail-tu" data-rail="you" role="region" aria-label=\{ui\.youRail\}>/,
+    );
+    expect(src).not.toContain('<aside');
     expect(src).toContain('data-metric="chrome-sign-in"');
+    expect(src).toMatch(/popovertarget="menu-cara"[\s\S]*?data-metric="you-menu"/);
     expect(src).toMatch(/popovertarget="menu-cara"[\s\S]*?data-metric="chrome-account"/);
-    expect(src).toMatch(/popovertarget="menu-crear"[\s\S]*?data-metric="you-create"/);
+    expect(src).toContain('data-metric="you-menu-sign-in"');
     expect(src).toContain('YOU_ITEMS.map');
     expect(src).toContain('CREATE_ITEMS.map');
-    const aside = src.indexOf('</aside>');
-    expect(src.indexOf('id="menu-cara"')).toBeGreaterThan(aside);
-    expect(src.indexOf('id="menu-crear"')).toBeGreaterThan(aside);
+    expect(src).toContain('data-metric={`you-create-${item.id}`}');
+    // One menu: the old second popover and the rail's own controls are gone.
+    expect(src).not.toContain('menu-crear');
+    expect(src).not.toContain('data-metric="you-create"');
+    expect(src).not.toContain('you-collapse');
+    expect(src).not.toContain('you-settings');
+    expect(src).not.toContain('you-sign-out');
+    expect(src).not.toContain('chrome-balance');
+    // The menu lives inside the band and holds everything.
+    const menu = src.slice(src.indexOf('id="menu-cara"'));
+    for (const metric of [
+      'chrome-profile',
+      'data-you-count="agenda"',
+      'data-face-balance',
+      'data-notices-dot',
+      'chrome-panels',
+      'chrome-account-settings',
+      'chrome-mode-system',
+      'chrome-sign-out',
+    ]) {
+      expect(menu).toContain(metric);
+    }
+    expect(menu).toContain('<LanguageMenu');
     // No presence: never a control that does nothing.
     expect(src).not.toMatch(/e-en-linea|frase de estado|yo-frase|data-presence/i);
   });
 
-  it('mirror the position, never the reading: icon and word from the left on both rails', async () => {
+  it('reads the rail from the left: icon and word, a counter right after its word', async () => {
     const css = await read(SHELL);
     expect(rule(css, /\n\.rail-item/)).not.toMatch(/flex-direction:\s*row-reverse/);
     expect(rule(css, /\n\.rail-n/)).toMatch(/margin-left:\s*-6px/);
@@ -150,7 +184,7 @@ describe('the sprite', () => {
     expect(sprite).toContain('{icons.map((name) => <Icon name={name} symbol />)}');
     expect(sprite).toContain('navIcon(item, navState(item, basePath))');
     expect(await read(CITY)).toContain('<Icon name={navIcon(item, state)} size={24} use />');
-    expect(await read(YOU)).toContain('<Icon name={navIcon(item, state)} size={24} use />');
+    expect(await read(YOU)).toContain('<Icon name={navIcon(item, state)} size={20} use />');
     expect(await read(PHONE_BAR)).toContain('<Icon name={navIcon(item, state)} size={24} use />');
     const layout = await read(LAYOUT);
     expect(layout).toContain('{chrome && <ChromeSprite basePath={basePath} />}');
@@ -158,7 +192,7 @@ describe('the sprite', () => {
 });
 
 describe('the phone', () => {
-  it('swaps the rails for a header and a fixed bottom bar of four places and «Tú», 56 px and the safe area', async () => {
+  it('swaps the rail and your band for a header and a fixed bottom bar of four places and «Tú», 56 px and the safe area', async () => {
     const bar = await read(PHONE_BAR);
     expect(bar).toContain('PHONE_ITEMS.map');
     expect(bar).toContain('data-metric={`tab-${item.id}`}');
@@ -167,7 +201,7 @@ describe('the phone', () => {
     expect(header).toContain('data-metric="phone-bazaar"');
     expect(header).toContain('data-metric="phone-search"');
     const block = phone(await read(SHELL));
-    expect(block).toMatch(/\.rail\s*\{\s*display:\s*none/);
+    expect(block).toMatch(/\.rail,\s*\.cabeza-tu\s*\{\s*display:\s*none/);
     expect(block).toMatch(
       /\.barra-movil\s*\{[^}]*position:\s*fixed[^}]*env\(safe-area-inset-bottom/,
     );
@@ -239,12 +273,14 @@ describe('the page', () => {
     );
   });
 
-  it('keeps the skip link first, then the city, the page and you, and the reading column for the chromeless planes', async () => {
+  it('keeps the skip link first, then the city, you (top right), the page, and the reading column for the chromeless planes', async () => {
     const layout = await read(LAYOUT);
     const body = layout.slice(layout.indexOf('<body>'));
     expect(body.indexOf('class="saltar"')).toBeLessThan(body.indexOf('<CityRail'));
-    expect(body.indexOf('<CityRail')).toBeLessThan(body.indexOf('<main id="contenido"'));
-    expect(body.indexOf('<main id="contenido"')).toBeLessThan(body.indexOf('<YouRail'));
+    expect(body.indexOf('<CityRail')).toBeLessThan(body.indexOf('<YouRail'));
+    expect(body.indexOf('<YouRail')).toBeLessThan(body.indexOf('<main id="contenido"'));
+    // Inside the page's column, above its header and its main.
+    expect(body.indexOf('<div class="app-centro">')).toBeLessThan(body.indexOf('<YouRail'));
     expect(body).toContain('<main id="contenido" tabindex="-1"');
     expect(layout).toContain('{chrome && <Starfield />}');
     expect(layout).toMatch(/\.plano\s*\{[^}]*max-width:\s*1100px/);

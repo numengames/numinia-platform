@@ -102,11 +102,16 @@ const rows = (page: Page) => page.locator('[data-notices-list] [data-notice]');
 const chip = (page: Page, id: string) => page.locator(`[data-metric="notifications-chip-${id}"]`);
 const visibleRows = (page: Page) => page.locator('[data-notices-list] [data-notice]:not([hidden])');
 
-test('your rail rings the bell for the notices, and nothing lists the updates', async ({
+test('your face’s menu rings the bell for the notices, and nothing lists the updates', async ({
   page,
 }) => {
+  // Signed in, with nothing new: the bell is there, and neither the face nor the row shows a dot.
+  await signedIn(page);
+  const asked = await withNotices(page, { ok: true, unseen: 0, notices: [] });
   await page.goto('/es/');
-  const bell = page.locator('.rail-tu [data-metric="you-notices"]');
+  await expect.poll(() => asked.length).toBe(1);
+  await page.locator('[data-metric="chrome-account"]').click();
+  const bell = page.locator('#menu-cara [data-metric="you-notices"]');
   await expect(bell).toBeVisible();
   await expect(bell).toHaveAttribute('href', '/es/notifications/');
   await expect(bell).toContainText('Avisos');
@@ -119,8 +124,22 @@ test('your rail rings the bell for the notices, and nothing lists the updates', 
     .locator('a[href$="/updates/"]')
     .evaluateAll((links) => [...new Set(links.map((link) => link.getAttribute('data-metric')))]);
   expect(doors).toEqual(['footer-version']);
-  // Signed out, no dot and no read of the notices.
-  await expect(page.locator('.rail-tu [data-notices-dot]')).toBeHidden();
+  await expect(page.locator('[data-notices-dot]:visible')).toHaveCount(0);
+});
+
+test('signed out, the menu has no bell and nothing asks for the notices', async ({ page }) => {
+  const asked: string[] = [];
+  await page.route('**/api/notices**', (route) => {
+    asked.push(route.request().url());
+    return route.fulfill({ status: 401, json: { error: 'signed-out' } });
+  });
+  await page.goto('/es/');
+  await page.locator('[data-metric="you-menu"]').click();
+  await expect(page.locator('#menu-cara')).toBeVisible();
+  await expect(page.locator('#menu-cara [data-metric="you-notices"]')).toBeHidden();
+  await page.waitForLoadState('networkidle');
+  await expect(page.locator('[data-notices-dot]:visible')).toHaveCount(0);
+  expect(asked).toEqual([]);
 });
 
 test('signed out, the page offers the door and comes back here', async ({ page }) => {
@@ -261,30 +280,37 @@ test('nothing to show says «Estás al día»; a list that cannot be read offers
   await expect(rows(page)).toHaveCount(4);
 });
 
-test('the bell shows a dot when there is something new, and a visit makes it go', async ({
+test('the face and the bell show a dot when there is something new, and a visit makes it go', async ({
   page,
 }) => {
   await signedIn(page);
   const asked = await withNotices(page);
   await page.goto('/es/');
-  const dot = page.locator('.rail-tu [data-notices-dot]');
-  await expect(dot).toBeVisible();
-  await expect(dot.locator('[role="img"]')).toHaveAttribute('aria-label', 'Hay algo nuevo');
-  await expect(page.locator('.rail-tu [data-metric="you-notices"]')).not.toContainText(/\d/);
+  // The dot rides on the face, so it is seen with the menu closed.
+  const faceDot = page.locator('[data-metric="chrome-account"] [data-notices-dot]');
+  await expect(faceDot).toBeVisible();
+  await expect(faceDot).toHaveAttribute('aria-label', 'Hay algo nuevo');
   await expect.poll(() => asked.length).toBe(1);
   expect(asked[0]).not.toContain('since=');
 
-  await page.locator('.rail-tu [data-metric="you-notices"]').click();
+  await page.locator('[data-metric="chrome-account"]').click();
+  const bell = page.locator('#menu-cara [data-metric="you-notices"]');
+  const rowDot = bell.locator('[data-notices-dot]');
+  await expect(rowDot).toBeVisible();
+  await expect(rowDot.locator('[role="img"]')).toHaveAttribute('aria-label', 'Hay algo nuevo');
+  await expect(bell).not.toContainText(/\d/);
+
+  await bell.click();
   await expect(page).toHaveURL(/\/es\/notifications\/$/);
   await expect(rows(page)).toHaveCount(4);
-  await expect(page.locator('.rail-tu [data-notices-dot]')).toBeHidden();
-  // Only the page asked here; the rail did not ask twice.
+  await expect(page.locator('[data-notices-dot]:visible')).toHaveCount(0);
+  // Only the page asked here; the chrome did not ask twice.
   expect(asked).toHaveLength(2);
 
   await page.goto('/es/');
   await expect.poll(() => asked.length).toBe(3);
   expect(asked[2]).toContain('since=');
-  await expect(page.locator('.rail-tu [data-notices-dot]')).toBeHidden();
+  await expect(page.locator('[data-notices-dot]:visible')).toHaveCount(0);
 });
 
 test('on a phone the «Tú» tab and the sheet carry the dot too; the page fits 390 and is clean for axe', async ({

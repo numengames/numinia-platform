@@ -97,10 +97,10 @@ const urlFor = (target: SupportedLocale): string =>
         }
         if (localStorage.getItem('numinia-lap-nav') === 'plegado')
           document.documentElement.dataset.lapNav = 'plegado';
-        /* v3 «La ciudad y tú»: each rail's fold, before the first paint —
-           a phone on its side folds both; else the kept choice; else the
-           width (≥ 1440 both open, 1024–1439 yours folded, below both).
-           The same rule as lib/app-nav.ts railState (this script is inline). */
+        /* The city rail's fold, before the first paint — a phone on its
+           side folds it; else the kept choice; else the width (open from
+           1024 px). The same rule as lib/rails.ts railState (this script is
+           inline). What is yours is a menu under your face (YouRail). */
         var rw = innerWidth, rh = innerHeight;
         var folds = localStorage.getItem('numinia-sidebar') || '';
         var rail = function (side) {
@@ -112,7 +112,6 @@ const urlFor = (target: SupportedLocale): string =>
           return rw >= 1024 && side === 'city' ? 'expanded' : 'collapsed';
         };
         document.documentElement.dataset.railCity = rail('city');
-        document.documentElement.dataset.railYou = rail('you');
         var hidden = localStorage.getItem('numinia-lap-hidden');
         /* Never chosen: a quiet panel (lib/lap-sections.ts); '' is a choice. */
         if (hidden === null) hidden = 'codex,portals,loot,stats';
@@ -163,6 +162,7 @@ const urlFor = (target: SupportedLocale): string =>
         <div class="app">
           <CityRail locale={locale} basePath={basePath} />
           <div class="app-centro">
+            <YouRail locale={locale} basePath={basePath} />
             <PhoneHeader locale={locale} basePath={basePath} />
             <main id="contenido" tabindex="-1" data-wide={wide ? '' : undefined}>
               <slot />
@@ -173,7 +173,6 @@ const urlFor = (target: SupportedLocale): string =>
               <ShellFooter locale={locale} where="page" />
             </div>
           </div>
-          <YouRail locale={locale} basePath={basePath} />
         </div>
       ) : (
         <main class="plano" data-wide={wide ? '' : undefined}>

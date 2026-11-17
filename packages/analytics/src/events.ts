@@ -253,10 +253,19 @@ export function buildEvent<Name extends AnalyticsEventName>(
 // - «Peticiones» (the panel's Members, the house's Census): `request-accept`,
 //   `request-decline`.
 
-// ---- v3 «Tu agenda» and «Tus mundos» in your rail (cut I, 2026-10-17): its data-metric ids ----
+// ---- Your face at the top right replaces the right rail (2026-11-17): its data-metric ids ----
 // No new event and no new prop: each travels as `cta_click.metricId`.
-// - Your rail and the phone's «Tú» sheet: `you-agenda`, `you-worlds`,
-//   `sheet-agenda`, `sheet-worlds` (the two new places, as the rail's
+// - The face button that opens «Tu menú»: `you-menu` (signed out) and
+//   `chrome-account` (signed in); the signed-out row inside it:
+//   `you-menu-sign-in`. The rail's `you-collapse`, `you-create`,
+//   `you-settings` and `you-sign-out` are gone (the menu's rows are
+//   `chrome-account-settings` and `chrome-sign-out`; `you-create-<id>` and
+//   `you-<id>` keep their names).
+
+// ---- v3 «Tu agenda» and «Tus mundos» in your face's menu (cut I, 2026-10-17): its data-metric ids ----
+// No new event and no new prop: each travels as `cta_click.metricId`.
+// - Your face's menu and the phone's «Tú» sheet: `you-agenda`, `you-worlds`,
+//   `sheet-agenda`, `sheet-worlds` (the two new places, as the menu's
 //   `you-<id>` / `sheet-<id>` rule already names them).
 // - «Tus mundos» /mis-mundos/: `my-worlds-sign-in` (the door, signed out),
 //   `my-worlds-community` (a community's name, to its page),
@@ -271,8 +280,8 @@ export function buildEvent<Name extends AnalyticsEventName>(
 //   community's card); `belong-community` and `belong-ritual` stay.
 // ---- v3 «Crear → Un encuentro» for real (cut M, 2026-10-17): its data-metric ids ----
 // No new event and no new prop: each travels as `cta_click.metricId`.
-// - «Crear» in your rail and the phone's sheet: `you-create-encounter`,
-//   `sheet-create-encounter` (the rail's `you-create-<id>` / `sheet-create-<id>` rule).
+// - «Crear» in your face's menu and the phone's sheet: `you-create-encounter`,
+//   `sheet-create-encounter` (the menu's `you-create-<id>` / `sheet-create-<id>` rule).
 // - The form /crear/encuentro/: `create-encounter-sign-in` (the door, signed
 //   out), `create-encounter-claim` (the empty state's link to «Hazla tuya»),
 //   `create-encounter-community`, `create-encounter-title`,
