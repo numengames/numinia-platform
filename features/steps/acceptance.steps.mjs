@@ -533,7 +533,8 @@ Then('every page bar carries the scarab, the search, the mode and the door', asy
       'chrome-mode-day',
       'chrome-sign-in',
       'chrome-account',
-      'you-create',
+      'you-menu',
+      'you-create-community',
     ]) {
       assert.ok(html.includes(`data-metric="${metric}"`), `${page}: missing ${metric}`);
     }
@@ -553,7 +554,7 @@ Then('every page bar carries the scarab, the search, the mode and the door', asy
   }
 });
 
-Then('every page city rail, your rail and phone bar carry their places', async function () {
+Then('every page city rail, your face menu and phone bar carry their places', async function () {
   // The Bazar is hidden (BAZAAR_VISIBLE in lib/app-nav.ts): four places, and no door to it.
   const city = ['now', 'communities', 'encounters', 'worlds'];
   const yours = ['notices', 'your-communities', 'balance', 'loot'];
@@ -561,8 +562,13 @@ Then('every page city rail, your rail and phone bar carry their places', async f
     const html = await readFile(path.join(this.distDir, page), 'utf8');
     const left = /<aside class="rail rail-ciudad"[\s\S]*?<\/aside>/.exec(html);
     assert.ok(left, `${page}: the city's rail is missing`);
-    const right = /<aside class="rail rail-tu"[\s\S]*?<\/aside>/.exec(html);
-    assert.ok(right, `${page}: your rail is missing`);
+    // Your face sits at the page's top right, ahead of the phone header: its band runs to there.
+    const bandAt = html.indexOf('<div class="cabeza-tu rail-tu"');
+    assert.ok(bandAt >= 0, `${page}: your face's band is missing`);
+    const right = [html.slice(bandAt, html.indexOf('<header class="borde-movil"', bandAt))];
+    assert.ok(right[0].includes('id="menu-cara"'), `${page}: the face's menu is not in its band`);
+    assert.ok(!html.includes('<aside class="rail rail-tu"'), `${page}: a right rail remains`);
+    assert.ok(!html.includes('id="menu-crear"'), `${page}: a second popover remains`);
     const tabs = /<nav class="barra-movil"[\s\S]*?<\/nav>/.exec(html);
     assert.ok(tabs, `${page}: the phone's bottom bar is missing`);
     for (const place of city) {
@@ -582,7 +588,13 @@ Then('every page city rail, your rail and phone bar carry their places', async f
     for (const place of yours) {
       assert.ok(
         right[0].includes(`data-metric="you-${place}"`),
-        `${page}: your rail lacks ${place}`,
+        `${page}: your face menu lacks ${place}`,
+      );
+    }
+    for (const place of ['community', 'encounter', 'world']) {
+      assert.ok(
+        right[0].includes(`data-metric="you-create-${place}"`),
+        `${page}: your face menu cannot create ${place}`,
       );
     }
     for (const place of ['now', 'communities', 'encounters', 'worlds', 'you']) {
@@ -591,8 +603,8 @@ Then('every page city rail, your rail and phone bar carry their places', async f
         `${page}: phone bar lacks ${place}`,
       );
     }
-    // The rails read the same way: the right one is never written backwards.
-    assert.ok(!right[0].includes('dir="rtl"'), `${page}: your rail reads backwards`);
+    // Your menu reads the same way: never written backwards.
+    assert.ok(!right[0].includes('dir="rtl"'), `${page}: your menu reads backwards`);
     // Exactly the same city place is current in the rail and in the phone bar.
     const current = (block) =>
       [...block.matchAll(/aria-current="page"[^>]*data-metric="(?:nav|tab)-([a-z-]+)"/g)].map(
@@ -759,8 +771,9 @@ Then(
       const where = prefix || 'en';
       // One face for everyone: no visitor face, no signed-in face waiting hidden.
       assert.ok(!html.includes('class="visita"'), `${where}: the visitor face is still there`);
-      assert.ok(!html.includes('<div data-session-in hidden'), `${where}: a hidden second face`);
       const main = html.slice(html.indexOf('<main'));
+      // (Your face's menu, ahead of the page, keeps its own signed-in head: only the page is one.)
+      assert.ok(!main.includes('<div data-session-in hidden'), `${where}: a hidden second face`);
       assert.equal((main.match(/<h1\b/g) ?? []).length, 1, `${where}: one h1`);
       // Top to bottom: the frame, the encounters, the communities, the newest goods, the doors.
       const order = ['id="destacado"', 'id="rituals"', 'id="alive"', 'class="final"'].map(

@@ -50,13 +50,14 @@ test('an unsupported locale stays on the English root', async ({ browser }) => {
 test('choosing a language in the menu is remembered', async ({ browser }) => {
   const context = await browser.newContext({
     locale: 'en-US',
-    // Both rails open (≥ 1440): the language sits at your rail's foot.
+    // A desktop: your face is at the top right.
     viewport: { width: 1600, height: 900 },
   });
   const page = await context.newPage();
   await page.goto('/es/');
-  // v3 (v0.112.0): the language is a segmented control at your rail's foot.
-  await page.locator('.rail-tu [data-metric="lang-ja"]').click();
+  // The language is a segmented control in your face's menu.
+  await page.locator('[data-metric="you-menu"]').click();
+  await page.locator('#menu-cara [data-metric="lang-ja"]').click();
   await page.waitForURL('**/ja/');
   expect(await page.evaluate(() => localStorage.getItem('numinia-lang'))).toBe('ja');
   await context.close();

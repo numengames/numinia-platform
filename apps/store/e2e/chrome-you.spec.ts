@@ -1,7 +1,7 @@
 /**
- * Cut I, «Tu agenda» and «Tus mundos» in your rail: the two new places sit
- * between «Tus comunidades» and «Tu saldo» — in the rail, in the phone's
- * «Tú» sheet, in the folded rail's tooltips — in five languages, and their
+ * Cut I, «Tu agenda» and «Tus mundos» in your face's menu (it was the right
+ * rail's): the two new places sit between «Tus comunidades» and «Tu saldo» —
+ * in the menu, in the phone's «Tú» sheet — in five languages, and their
  * counters appear only once there is something to count: how many
  * encounters you are going to that are still ahead (`/api/rsvp`), how many
  * worlds your communities have (`/api/mundos/mine`) — and, since cut
@@ -78,27 +78,32 @@ async function signedIn(
   return { asked: () => asked };
 }
 
+/** Your face opens «Tu menú»: what is yours is only visible from there. */
+const openMenu = async (page: Page): Promise<void> => {
+  await page.locator('[data-metric="chrome-account"]').click();
+  await expect(page.locator('#menu-cara')).toBeVisible();
+};
+
 test.describe('the two places, in five languages', () => {
-  test('in the rail, between «Tus comunidades» and «Tu saldo», each to its page', async ({
+  test('in the menu, between «Tus comunidades» and «Tu saldo», each to its page', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1600, height: 900 });
     for (const locale of LOCALES) {
       await page.goto(locale.path);
       const prefix = locale.path === '/' ? '' : locale.path.slice(0, -1);
-      const agenda = page.locator('.rail-tu [data-metric="you-agenda"]');
-      const worlds = page.locator('.rail-tu [data-metric="you-worlds"]');
+      const agenda = page.locator('#menu-cara [data-metric="you-agenda"]');
+      const worlds = page.locator('#menu-cara [data-metric="you-worlds"]');
       await expect(agenda, locale.path).toContainText(locale.agenda);
       await expect(worlds, locale.path).toContainText(locale.worlds);
       await expect(agenda).toHaveAttribute('href', `${prefix}/agenda/`);
       await expect(worlds).toHaveAttribute('href', `${prefix}/mis-mundos/`);
-      await expect(agenda).toHaveAttribute('data-rail-tip', locale.agenda);
       // Signed out: no counter at all, and nothing asked.
       await expect(agenda.locator('[data-you-count]')).toBeHidden();
       await expect(worlds.locator('[data-you-count]')).toBeHidden();
     }
     const metrics = await page
-      .locator('.rail-tu .rail-nav a')
+      .locator('#menu-cara nav a[data-metric^="you-"]:not([data-metric^="you-create-"])')
       .evaluateAll((links) => links.map((link) => link.getAttribute('data-metric')));
     expect(metrics).toEqual([
       'you-notices',
@@ -125,24 +130,15 @@ test.describe('the two places, in five languages', () => {
     }
   });
 
-  test('the folded rail keeps their tooltips', async ({ page }) => {
-    await page.setViewportSize({ width: 1600, height: 900 });
-    await page.goto('/es/');
-    await page.locator('[data-rail-fold="you"]').click();
-    await expect(page.locator('html')).toHaveAttribute('data-rail-you', 'collapsed');
-    await page.locator('.rail-tu [data-metric="you-worlds"]').hover();
-    await expect(page.locator('#rail-tip')).toHaveText('Tus mundos');
-  });
-
   test('«Tu agenda» is lit on /agenda/ and «Tus mundos» on /mis-mundos/', async ({ page }) => {
     await page.setViewportSize({ width: 1600, height: 900 });
     await page.goto('/es/agenda/');
-    await expect(page.locator('.rail-tu [data-metric="you-agenda"]')).toHaveAttribute(
+    await expect(page.locator('#menu-cara [data-metric="you-agenda"]')).toHaveAttribute(
       'aria-current',
       'page',
     );
     await page.goto('/es/mis-mundos/');
-    await expect(page.locator('.rail-tu [data-metric="you-worlds"]')).toHaveAttribute(
+    await expect(page.locator('#menu-cara [data-metric="you-worlds"]')).toHaveAttribute(
       'aria-current',
       'page',
     );
@@ -168,10 +164,11 @@ test.describe('the counters', () => {
       follows: ['trgcon', 'merge'],
     });
     await page.goto('/es/');
-    const agenda = page.locator('.rail-tu [data-metric="you-agenda"] [data-you-count]');
-    const worlds = page.locator('.rail-tu [data-metric="you-worlds"] [data-you-count]');
+    await openMenu(page);
+    const agenda = page.locator('#menu-cara [data-metric="you-agenda"] [data-you-count]');
+    const worlds = page.locator('#menu-cara [data-metric="you-worlds"] [data-you-count]');
     const communities = page.locator(
-      '.rail-tu [data-metric="you-your-communities"] [data-you-count]',
+      '#menu-cara [data-metric="you-your-communities"] [data-you-count]',
     );
     await expect(agenda).toBeVisible();
     await expect(agenda).toHaveText('1');
@@ -193,20 +190,28 @@ test.describe('the counters', () => {
   test('never a «0»: with no RSVP ahead and no world the figures stay hidden', async ({ page }) => {
     await signedIn(page, { mine: [HELD], worlds: 0 });
     await page.goto('/es/');
-    await expect(page.locator('[data-metric="chrome-account"]')).toBeVisible();
-    await expect(page.locator('.rail-tu [data-metric="you-agenda"] [data-you-count]')).toBeHidden();
-    await expect(page.locator('.rail-tu [data-metric="you-worlds"] [data-you-count]')).toBeHidden();
+    await openMenu(page);
     await expect(
-      page.locator('.rail-tu [data-metric="you-your-communities"] [data-you-count]'),
+      page.locator('#menu-cara [data-metric="you-agenda"] [data-you-count]'),
+    ).toBeHidden();
+    await expect(
+      page.locator('#menu-cara [data-metric="you-worlds"] [data-you-count]'),
+    ).toBeHidden();
+    await expect(
+      page.locator('#menu-cara [data-metric="you-your-communities"] [data-you-count]'),
     ).toBeHidden();
   });
 
   test('a refusal leaves the figures hidden', async ({ page }) => {
     await signedIn(page, null);
     await page.goto('/es/');
-    await expect(page.locator('[data-metric="chrome-account"]')).toBeVisible();
-    await expect(page.locator('.rail-tu [data-metric="you-agenda"] [data-you-count]')).toBeHidden();
-    await expect(page.locator('.rail-tu [data-metric="you-worlds"] [data-you-count]')).toBeHidden();
+    await openMenu(page);
+    await expect(
+      page.locator('#menu-cara [data-metric="you-agenda"] [data-you-count]'),
+    ).toBeHidden();
+    await expect(
+      page.locator('#menu-cara [data-metric="you-worlds"] [data-you-count]'),
+    ).toBeHidden();
   });
 
   test('signed out nothing is asked', async ({ page }) => {

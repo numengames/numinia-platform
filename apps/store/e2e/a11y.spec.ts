@@ -128,7 +128,7 @@ for (const mode of MODES) {
   });
 }
 
-test('keyboard: skip link, the city, the page, then you — and the focus ring is the system turquoise', async ({
+test('keyboard: skip link, the city, then you (top right), then the page — and the focus ring is the system turquoise', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1600, height: 900 });
@@ -136,7 +136,8 @@ test('keyboard: skip link, the city, the page, then you — and the focus ring i
   await page.waitForLoadState('networkidle');
   const stops: string[] = [];
   let sawSystemOutline = false;
-  for (let i = 0; i < 200 && !stops.includes('you-settings'); i += 1) {
+  // Until the first stop after the page's own: there nothing of the chrome should come back.
+  for (let i = 0; i < 200 && !(stops.includes('main') && stops.at(-1) !== 'main'); i += 1) {
     await page.keyboard.press('Tab');
     const info = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement;
@@ -155,7 +156,8 @@ test('keyboard: skip link, the city, the page, then you — and the focus ring i
   }
   // v3 «La ciudad y tú»: the skip link, the city's rail top to bottom —
   // brand, fold, search, its places, «Ahora en la ciudad», its foot — then
-  // the page, then your rail: fold, the door, «Crear», your places, settings.
+  // you at the top right (the door, your face: its menu is shut, so its rows
+  // are not stops), then the page.
   const expected = [
     'nav-skip',
     'nav-home',
@@ -167,16 +169,9 @@ test('keyboard: skip link, the city, the page, then you — and the focus ring i
     'nav-worlds',
     'nav-more-how',
     'footer-epitaph',
-    'main',
-    'you-collapse',
     'chrome-sign-in',
-    'you-create',
-    'you-notices',
-    'you-your-communities',
-    'you-agenda',
-    'you-worlds',
-    'you-loot',
-    'you-settings',
+    'you-menu',
+    'main',
   ];
   expect(stops[0], stops.join(' → ')).toBe('nav-skip');
   const positions = expected.map((metric) => stops.indexOf(metric));
@@ -185,13 +180,14 @@ test('keyboard: skip link, the city, the page, then you — and the focus ring i
     [...positions].sort((a, b) => a - b),
     stops.join(' → '),
   ).toEqual(positions);
-  // Nothing of the rails comes back once the page has been reached.
-  expect(stops.lastIndexOf('main'), stops.join(' → ')).toBeLessThan(stops.indexOf('you-collapse'));
+  // Nothing of the chrome comes back once the page has been reached, and the shut menu is skipped.
+  expect(stops.lastIndexOf('you-menu'), stops.join(' → ')).toBeLessThan(stops.indexOf('main'));
+  expect(stops.filter((metric) => metric.startsWith('you-') && metric !== 'you-menu')).toEqual([]);
   expect(sawSystemOutline, `outlines seen on: ${stops.join(' → ')}`).toBe(true);
 });
 
-/* The app shell at three widths (1600 both rails open, 1280 yours folded,
-   390 a phone), in both modes, with its menus open and the rails folded:
+/* The app shell at three widths (1600 and 1280 with the city rail and your
+   face, 390 a phone), in both modes, with the face's menu open and the rail folded:
    the chrome is on every page, so its own states are measured here, not
    only the pages. */
 const SHELL_PAGES = [
@@ -253,7 +249,7 @@ for (const mode of MODES) {
         });
       }
 
-      test('WCAG A/AA with the folded footer open, then with the menus or the «Tú» sheet open', async ({
+      test('WCAG A/AA with the folded footer open, then with your face’s menu or the «Tú» sheet open', async ({
         page,
       }) => {
         await page.goto('/es/');
@@ -266,21 +262,19 @@ for (const mode of MODES) {
           await page.locator('[data-metric="tab-you"]').click();
           await expect(page.locator('#hoja-tu')).toBeVisible();
         } else {
-          await page.locator('[data-metric="you-create"]').click();
-          await expect(page.locator('#menu-crear')).toBeVisible();
+          await page.locator('[data-metric="you-menu"]').click();
+          await expect(page.locator('#menu-cara')).toBeVisible();
         }
         const violations = await axe(page);
         expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
       });
 
       if (viewport.width >= 768) {
-        test('WCAG A/AA with both rails folded, a tooltip showing', async ({ page }) => {
+        test('WCAG A/AA with the city rail folded, a tooltip showing', async ({ page }) => {
           await page.goto('/es/');
           await page.waitForLoadState('networkidle');
-          for (const side of ['nav-collapse', 'you-collapse']) {
-            const fold = page.locator(`[data-metric="${side}"]`);
-            if ((await fold.getAttribute('aria-expanded')) === 'true') await fold.click();
-          }
+          const fold = page.locator('[data-metric="nav-collapse"]');
+          if ((await fold.getAttribute('aria-expanded')) === 'true') await fold.click();
           await page.locator('[data-metric="nav-communities"]').hover();
           await expect(page.locator('#rail-tip')).toBeVisible();
           const violations = await axe(page);

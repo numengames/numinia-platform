@@ -34,7 +34,7 @@ Feature: The organization panel
 
   Scenario: The panel belongs to «Tus comunidades»
     Given the store application has been built
-    Then the panel pages light «Tus comunidades» on your rail and «Tú» on the phone bar
+    Then the panel pages light «Tus comunidades» in your menu and «Tú» on the phone bar
 
   Scenario: The members and roles screens of the panel are served with the walls of a page where the wallet signs
     Given the store application has been built

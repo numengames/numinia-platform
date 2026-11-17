@@ -1,6 +1,6 @@
 /**
- * «El menú de la cara» (cut 9; since v0.112.0 «Tu menú», opened from your
- * face at the head of the right rail) in a real browser against the built
+ * «El menú de la cara» (cut 9; «Tu menú», opened from your face at the top
+ * right — it holds what the right rail did) in a real browser against the built
  * site. As in session-chrome.spec.ts the e2e server has no auth secrets, so
  * the session, the till's overview and the profile are played by the
  * browser (`page.route`), shaped as the routes send them. What is under
@@ -64,7 +64,7 @@ const open = async (page: Page, path = '/es/communities/'): Promise<void> => {
 const MENU = '#menu-cara';
 
 test.describe('the face menu', () => {
-  test('opens from your face on the right rail: the name published, the rank, the balance and one door per panel', async ({
+  test('opens from your face at the top right: the name published, the rank, the balance and one door per panel', async ({
     page,
   }) => {
     await signedIn(page, [PERSONAL, HOUSE, GAMES, TARUGO], {
@@ -75,14 +75,14 @@ test.describe('the face menu', () => {
     await open(page);
     const menu = page.locator(MENU);
     await expect(menu).toBeVisible();
-    // The menu floats next to its button, outside the rail.
+    // The menu hangs under its button, in the top layer.
     const button = await page.locator('[data-metric="chrome-account"]').boundingBox();
     const box = await menu.boundingBox();
     expect(box && button && box.y >= button.y + button.height).toBe(true);
     await expect(menu.locator('[data-face-name]')).toHaveText('Pablo');
     await expect(menu.locator('.pop-rango [data-rank-name="oracle"]')).toHaveText('Oráculo');
     await expect(menu.locator('[data-metric="chrome-profile"]')).toHaveText('Tu perfil');
-    const balance = menu.locator('[data-metric="chrome-balance"]');
+    const balance = menu.locator('[data-metric="you-balance"]');
     await expect(balance).toContainText('Tu saldo');
     await expect(balance.locator('[data-face-balance]')).toContainText('18,40');
     await expect(balance).toHaveAttribute('href', '/es/saldo/');
@@ -97,9 +97,8 @@ test.describe('the face menu', () => {
     await expect(menu.locator('[data-metric="chrome-panels"]')).toBeHidden();
     await expect(menu.locator('[data-metric="chrome-account-settings"]')).toHaveText('Ajustes');
     await expect(menu.locator('[data-metric="chrome-sign-out"]')).toHaveText('Cerrar sesión');
-    // The head of the rail takes your published name and face too.
+    // Your face at the top right takes your published face too.
     const head = page.locator('[data-metric="chrome-account"]');
-    await expect(head.locator('[data-face-name]')).toHaveText('Pablo');
     await expect(head.locator('img[data-face-img]')).toHaveAttribute(
       'src',
       '/thumbs/1x/avatar-arla.webp',
@@ -111,7 +110,10 @@ test.describe('the face menu', () => {
     await open(page);
     const menu = page.locator(MENU);
     await expect(menu.getByText(/estado|en línea|online/i)).toHaveCount(0);
-    await expect(menu.locator('[disabled], [aria-disabled="true"], button')).toHaveCount(0);
+    // Only the appearance's segments are buttons here; none is dead.
+    await expect(
+      menu.locator('[disabled], [aria-disabled="true"], button:not([data-mode-set])'),
+    ).toHaveCount(0);
   });
 
   test('without a published name the short wallet stays; without a till the figure and the list are left out', async ({
@@ -121,7 +123,7 @@ test.describe('the face menu', () => {
     await open(page);
     const menu = page.locator(MENU);
     await expect(menu.locator('[data-face-name]')).toHaveText('0x42e6…ca26');
-    await expect(menu.locator('[data-metric="chrome-balance"]')).toBeVisible();
+    await expect(menu.locator('[data-metric="you-balance"]')).toBeVisible();
     await expect(menu.locator('[data-face-balance]')).toBeHidden();
     await expect(menu.locator('[data-metric="chrome-panels"]')).toBeVisible();
     await expect(menu.locator('[data-metric="chrome-panel-org"]')).toHaveCount(0);
@@ -137,17 +139,31 @@ test.describe('the face menu', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator('[data-metric="chrome-panel-org"]')).toBeVisible();
     const order: string[] = [];
-    for (let step = 0; step < 5; step += 1) {
+    for (let step = 0; step < 40 && order.at(-1) !== 'chrome-sign-out'; step += 1) {
       await page.keyboard.press('Tab');
       order.push(
         await page.evaluate(() => document.activeElement?.getAttribute('data-metric') ?? 'none'),
       );
     }
-    expect(order).toEqual([
+    // The five languages sit between the appearance and the way out.
+    const languages = order.filter((metric) => metric.startsWith('lang-'));
+    expect(languages).toHaveLength(5);
+    expect(order.filter((metric) => !metric.startsWith('lang-'))).toEqual([
       'chrome-profile',
-      'chrome-balance',
+      'you-notices',
+      'you-your-communities',
+      'you-agenda',
+      'you-worlds',
+      'you-balance',
+      'you-loot',
       'chrome-panel-org',
+      'you-create-community',
+      'you-create-encounter',
+      'you-create-world',
       'chrome-account-settings',
+      'chrome-mode-system',
+      'chrome-mode',
+      'chrome-mode-day',
       'chrome-sign-out',
     ]);
     await page.keyboard.press('Escape');
@@ -185,7 +201,7 @@ test.describe('the face menu', () => {
     await signedIn(page, [PERSONAL, GAMES, TARUGO], { name: 'Pablo', avatar: null, face: null });
     await open(page);
     await expect(page.locator('[data-metric="chrome-panel-org"]').first()).toBeVisible();
-    const results = await new AxeBuilder({ page }).include(MENU).include('.rail-tu').analyze();
+    const results = await new AxeBuilder({ page }).include(MENU).include('.cabeza-tu').analyze();
     expect(results.violations).toEqual([]);
   });
 

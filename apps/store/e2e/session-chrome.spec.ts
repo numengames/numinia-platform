@@ -31,21 +31,19 @@ test('without a session the bar offers the door, and the door comes back here', 
   await expect(page.locator('html')).toHaveAttribute('data-session', 'out');
 });
 
-test('with a session the bar shows your account, your rank and the one way out', async ({
-  page,
-}) => {
+test('with a session the face opens your name, your rank and the one way out', async ({ page }) => {
   await signedInAs(page, 'oracle');
   await page.goto('/es/communities/');
   const account = page.locator('[data-metric="chrome-account"]');
   await expect(account).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-session', 'in');
   await expect(page.locator('[data-metric="chrome-sign-in"]')).toBeHidden();
-  await expect(account).toContainText('0x42e6…ca26');
   // The full wallet never reaches the page.
   expect(await page.content()).not.toContain(WALLET);
 
   await account.click();
   const menu = page.locator('#menu-cara');
+  await expect(menu.locator('[data-face-name]')).toHaveText('0x42e6…ca26');
   await expect(menu.locator('.pop-rango [data-rank-name="oracle"]')).toBeVisible();
   await expect(menu.locator('.pop-rango [data-rank-name="oracle"]')).toHaveText('Oráculo');
   await expect(menu.locator('[data-metric="chrome-sign-out"]')).toHaveAttribute(

@@ -112,7 +112,7 @@ async function signIn(context: BrowserContext, wallet: string): Promise<void> {
 const communityPage = (id: string, prefix = '/es') => `${origin}${prefix}/communities/${id}/`;
 const belongPage = (prefix = '/es') => `${origin}${prefix}/belong/`;
 const follow = '[data-metric="community-follow"]';
-const railCount = '.rail-tu [data-metric="you-your-communities"] [data-you-count]';
+const railCount = '#menu-cara [data-metric="you-your-communities"] [data-you-count]';
 
 test.describe('signed out', () => {
   test('«Seguir» is the door back to the community, and the API refuses', async ({ page }) => {

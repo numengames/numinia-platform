@@ -101,8 +101,13 @@
       if (!open || !button) return;
       const width = Math.min(300, innerWidth - 16);
       menu.style.width = `${width}px`;
+      // A button in the window's upper half (your face at the top right) opens its menu
+      // downwards: the menu takes the room below it and scrolls, never flipped over its button.
+      const anchor = button.getBoundingClientRect();
+      menu.style.maxHeight =
+        anchor.top < innerHeight / 2 ? `${Math.max(160, innerHeight - anchor.bottom - 16)}px` : '';
       const place = placeMenu(
-        button.getBoundingClientRect(),
+        anchor,
         { width, height: menu.offsetHeight },
         { width: innerWidth, height: innerHeight },
       );

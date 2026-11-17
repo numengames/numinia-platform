@@ -331,9 +331,6 @@ const sourceDate = ritual.source
       toast.dataset['ritualToast'] = '';
       toast.setAttribute('role', 'status');
       toast.textContent = words.published;
-      // Beside the right rail, not under it: the rail is fixed and the toast is too.
-      const rail = document.querySelector('aside.rail-tu')?.getBoundingClientRect().width ?? 0;
-      if (rail > 0) toast.style.right = `calc(${rail}px + var(--s5))`;
       document.body.append(toast);
       window.setTimeout(() => toast.remove(), 6000);
     }

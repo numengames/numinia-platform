@@ -127,7 +127,8 @@ test('your own account: the balance, the low-balance warning, usage and movement
   await expect(page.locator('[data-saldo-seller]')).toContainText('LINK.COM* NUMEN GAMES');
   await expect(page.locator('[data-saldo-lines] tbody tr')).toHaveCount(2);
   await expect(page.locator('[data-saldo-team]')).toHaveCount(0);
-  // The city's rail opens Saldo once you are signed in.
+  // Your face's menu opens Saldo once you are signed in.
+  await page.locator('[data-metric="chrome-account"]').click();
   await expect(page.locator('[data-metric="you-balance"]')).toBeVisible();
 });
 

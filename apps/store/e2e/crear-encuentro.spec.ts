@@ -116,12 +116,20 @@ test('signed out, the form is the door', async ({ page }) => {
   expect(href).toContain('/es/lap/session/?vuelta=%2Fes%2Fcrear%2Fencuentro%2F');
 });
 
-test('«Crear» in the rail offers «Un encuentro» after the community', async ({ page }) => {
+test('«Crear» in your face’s menu offers «Un encuentro» after the community', async ({
+  page,
+  context,
+}) => {
+  await signIn(context, PABLO);
   await page.goto(`${origin}/es/`);
-  const item = page.locator('[data-metric="you-create-encounter"]');
+  await page.locator('[data-metric="chrome-account"]').click();
+  const items = page.locator('#menu-cara [data-metric^="you-create-"]');
+  await expect(items).toHaveCount(3);
+  const item = page.locator('#menu-cara [data-metric="you-create-encounter"]');
+  await expect(item).toBeVisible();
   await expect(item).toHaveAttribute('href', '/es/crear/encuentro/');
   await expect(item).toContainText('Un encuentro');
-  await expect(item).toContainText('Para una comunidad que llevas');
+  await expect(items.first()).toHaveAttribute('data-metric', 'you-create-community');
 });
 
 test('an administrator fills the form, publishes, and lands on the page with the toast', async ({

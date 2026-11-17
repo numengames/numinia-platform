@@ -332,7 +332,9 @@ Then(
         hasFlag(html.slice(start, html.indexOf('>', start) + 1), 'popover'),
         `${where}: the face menu is not a popover`,
       );
-      const menu = html.slice(start, html.indexOf('<div id="menu-crear"', start));
+      // The menu sits in your band, ahead of the phone header.
+      const menu = html.slice(start, html.indexOf('<header class="borde-movil"', start));
+      assert.ok(menu.includes('data-metric="chrome-sign-out"'), `${where}: the menu is cut short`);
       const order = [
         'chrome-profile',
         'chrome-panels',
@@ -364,17 +366,19 @@ Then(
 );
 
 Then(
-  'the panel pages light «Tus comunidades» on your rail and «Tú» on the phone bar',
+  'the panel pages light «Tus comunidades» in your menu and «Tú» on the phone bar',
   async function () {
     for await (const { where, html } of panelPages(this.distDir)) {
-      const rail = /<aside class="rail rail-tu"[\s\S]*?<\/aside>/.exec(html);
+      const band = html.indexOf('<div class="cabeza-tu rail-tu"');
+      const rail =
+        band < 0 ? null : [html.slice(band, html.indexOf('<header class="borde-movil"', band))];
       const tabs = /<nav class="barra-movil"[\s\S]*?<\/nav>/.exec(html);
       const city = /<aside class="rail rail-ciudad"[\s\S]*?<\/aside>/.exec(html);
-      assert.ok(rail && tabs && city, `${where}: no rails or phone bar`);
+      assert.ok(rail && tabs && city, `${where}: no rail, face band or phone bar`);
       assert.equal(
         attr(tagWith(rail[0], 'data-metric="you-your-communities"'), 'aria-current'),
         'true',
-        `${where}: your rail`,
+        `${where}: your menu`,
       );
       assert.equal(
         attr(tagWith(tabs[0], 'data-metric="tab-you"'), 'aria-current'),

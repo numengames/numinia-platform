@@ -1,37 +1,37 @@
 ---
 /**
- * Your rail (v3, «La ciudad y tú»; the right one): what is yours, the
- * city's rail in a mirror. The mirror is of POSITION only, never of reading:
- * it sits on the right but reads like the left one — icon and word from the
- * left, a counter right after its word. Sticky, 256 px, 72 px folded (kept
- * under `numinia-sidebar-you`).
+ * You, top right (it replaces v3's right rail, «La ciudad y tú»): what is
+ * yours folds into one menu that your face opens — the way GitHub, Discord
+ * or YouTube do it — so the page gets the width a second rail took.
  *
- *   [ Entrar al mundo ]                                 → t_7c4d3d1e, while a world has people
- *   fold                     [ your face, name, rank ]  → «Tu menú»
- *   [ plus  Crear  ▾ ]                                  → the Crear menu
- *   Avisos · Tus comunidades · Tu agenda · Tus mundos · Tu saldo (signed in) · Tu botín
- *   (a counter after «Tu agenda», «Tus mundos» and «Tu saldo» when there is
- *   something to count; the first two are YouCounts.astro's, the balance the menu's)
- *   Ajustes · Aspecto [Sistema|Noche|Día] · Idioma [EN|ES|PT|日本|한국]
- *   Cerrar sesión (signed in)
+ *   [ Entrar al mundo ]  [ Entrar ]  [ face ▾ ]      → while a world has people / signed out / always
  *
- * Signed out the head is «Tú · Entrar» (the door) and a line says what this
- * bar will hold. Every page is prerendered for everyone: the session script
- * below decides after load and shows one face (`data-session-in/out`).
+ * The face's menu («Tu menú», one native popover):
+ *   signed in:  name · rank — Tu perfil · Avisos · Tus comunidades · Tu agenda
+ *               · Tus mundos · Tu saldo · Tu botín — the person's panels —
+ *               Crear (a community, an encounter, a world)
+ *   signed out: Entrar · sin contraseña
+ *   both:       Ajustes · Aspecto [Sistema|Noche|Día] · Idioma [EN|ES|PT|日本|한국]
+ *   signed in:  Cerrar sesión
+ * The counters ride after «Tu agenda», «Tus mundos», «Tus comunidades» and
+ * «Tu saldo» (YouCounts.astro's and the menu's own reads); the bell's dot
+ * shows on the face too, so something new is seen with the menu closed.
  *
- * The two menus live OUTSIDE the scrolling rail, in the top layer (native
- * popovers: Esc and a click outside close them, the focus returns to their
- * button, and their links follow the button in the tab order); the shell
- * script places them next to their button. There is no presence: no
- * status, no status phrase — never a control that does nothing.
+ * The band is a labelled region: with no rail around it, it would be page
+ * content outside every landmark (axe «region»).
+ *
+ * Every page is prerendered for everyone: the session script below decides
+ * after load and shows one face (`data-session-in/out`). The menu lives in
+ * the top layer (Esc and a click outside close it, the focus returns to its
+ * button); the shell script places it under the face.
  *
  * «Entrar al mundo» (t_7c4d3d1e): the front page's featured frame already
  * takes you straight into an open world once someone is inside
- * (Featured.astro, «la puerta de entrada»); this rail — the top-right of
- * every page — carries the same direct door, so it never depends on
- * scrolling to the frame or on which slide it shows. Own read of
- * `/api/live` (lib/live-now.ts, the same shape CityRail reads): nothing
- * shows while nobody answers or nobody is inside — never an invented door.
+ * (Featured.astro, «la puerta de entrada»); the top right of every page
+ * carries the same direct door, so it never depends on scrolling to the
+ * frame or on which slide it shows. Own read of `/api/live`
+ * (lib/live-now.ts, the same shape CityRail reads): nothing shows while
+ * nobody answers or nobody is inside — never an invented door.
  */
 import { AGORA_PLAZA, RANK_DEFINITIONS, type SupportedLocale } from '@numinia/domain';
 import { CHROME_MESSAGES } from '../../i18n/messages';
@@ -81,10 +81,10 @@ const homes = COMMUNITIES.flatMap((community) => {
 });
 ---
 
-<aside class="rail rail-tu" aria-label={ui.youRail} data-rail="you">
+<div class="cabeza-tu rail-tu" data-rail="you" role="region" aria-label={ui.youRail}>
   {
     homes.length > 0 && (
-      <div class="rail-vivo-puerta" data-live-door hidden>
+      <div class="tu-vivo" data-live-door hidden>
         {homes.map(({ id, world }) => (
           <a
             href={world.href}
@@ -92,9 +92,9 @@ const homes = COMMUNITIES.flatMap((community) => {
             rel="noopener noreferrer"
             class="rail-caja rail-entrar-vivo"
             data-live-door-row={id}
-            data-rail-tip={world.name}
             data-world-door={world.worldId}
             data-metric="you-live-world"
+            title={world.name}
             hidden
           >
             <Icon name="play" size={18} use />
@@ -104,112 +104,123 @@ const homes = COMMUNITIES.flatMap((community) => {
       </div>
     )
   }
-  <div class="rail-cab">
-    <button
-      type="button"
-      class="rail-plegar"
-      aria-expanded="true"
-      aria-label={ui.foldYou}
-      data-fold={`${ui.foldYou}|${ui.unfoldYou}`}
-      data-rail-fold="you"
-      data-rail-tip={ui.foldYou}
-      data-metric="you-collapse"
-    >
-      <Icon name="sidebar-simple" size={20} />
-    </button>
-    <a
-      href={signInHref(locale, basePath)}
-      class="yo"
-      data-session-out
-      data-rail-tip={`${ui.youWord} · ${ui.enter}`}
-      data-metric="chrome-sign-in"
-    >
-      <span class="cara vacia" aria-hidden="true"><Icon name="user-circle" size={24} use /></span>
-      <span class="yo-txt rail-t"><b>{ui.youWord}</b><span class="yo-entrar">{ui.enter}</span></span>
-    </a>
-    <button
-      type="button"
-      class="yo"
-      popovertarget="menu-cara"
-      data-session-in
-      hidden
-      data-rail-tip={ui.faceMenu}
-      data-metric="chrome-account"
-    >
-      <span class="cara" aria-hidden="true">
-        <Icon name="user-circle-fill" size={24} use />
-        <img alt="" width="40" height="40" data-face-img hidden />
-      </span>
-      <span class="yo-txt rail-t">
-        <b class="mono" data-face-name data-session-short></b>
-        <span>
-          {ranks.map((rank) => <span data-rank-name={rank.id} hidden>{rank.name}</span>)}
-        </span>
-      </span>
-    </button>
-  </div>
-
+  <a href={signInHref(locale, basePath)} class="tu-entrar" data-session-out data-metric="chrome-sign-in">
+    {ui.enter}
+  </a>
   <button
     type="button"
-    class="rail-caja rail-crear"
-    popovertarget="menu-crear"
-    data-rail-tip={ui.create}
-    data-metric="you-create"
+    class="yo"
+    popovertarget="menu-cara"
+    aria-label={ui.faceMenu}
+    data-rail-tip={ui.faceMenu}
+    data-tip-below
+    data-session-out
+    data-metric="you-menu"
   >
-    <Icon name="plus" size={20} use />
-    <span class="rail-t">{ui.create}</span>
-    <Icon name="caret-down" size={14} class="caja-caret" />
+    <span class="cara vacia" aria-hidden="true"><Icon name="user-circle" size={24} use /></span>
+    <Icon name="caret-down" size={14} class="yo-caret" />
+  </button>
+  <button
+    type="button"
+    class="yo"
+    popovertarget="menu-cara"
+    aria-label={ui.faceMenu}
+    data-rail-tip={ui.faceMenu}
+    data-tip-below
+    data-session-in
+    hidden
+    data-metric="chrome-account"
+  >
+    <span class="cara" aria-hidden="true">
+      <Icon name="user-circle-fill" size={24} use />
+      <img alt="" width="40" height="40" data-face-img hidden />
+    </span>
+    <span class="punto-aviso yo-punto" data-notices-dot hidden role="img" aria-label={ui.noticesDot}></span>
+    <Icon name="caret-down" size={14} class="yo-caret" />
   </button>
 
-  <nav class="rail-nav" aria-label={ui.youNav}>
-    <ul>
+  <div id="menu-cara" class="pop pop-fijo menu-tu" popover role="group" aria-label={ui.faceMenu} data-rail-menu>
+    <div data-session-in hidden>
+      <p class="pop-nombre mono" data-face-name data-session-short></p>
+      <p class="pop-rango">
+        {ranks.map((rank) => <span data-rank-name={rank.id} hidden>{rank.name}</span>)}
+      </p>
+    </div>
+    <a
+      href={signInHref(locale, basePath)}
+      class="opc opc-entrar"
+      data-session-out
+      data-metric="you-menu-sign-in"
+    >
+      <Icon name="user-circle" size={20} use />
+      {ui.signInSheet}
+    </a>
+
+    <nav aria-label={ui.youNav} data-session-in hidden>
+      <hr />
+      <a href={localeHref(locale, PROFILE_PATH)} class="opc" data-metric="chrome-profile">
+        <Icon name="user-circle" size={20} use />
+        {ui.face.profile}
+      </a>
       {
         YOU_ITEMS.map((item) => {
           const state = navState(item, basePath);
           return (
-            <li data-session-in={item.signedInOnly ? '' : undefined} hidden={item.signedInOnly}>
-              <a
-                href={localeHref(locale, item.path)}
-                class="rail-item"
-                aria-current={ariaCurrent(state)}
-                data-rail-tip={ui.you[item.id]}
-                data-metric={`you-${item.id}`}
-              >
-                <Icon name={navIcon(item, state)} size={24} use />
-                <span class="rail-t">{ui.you[item.id]}</span>
-                {item.id === 'notices' && (
-                  <span class="rail-n" data-notices-dot hidden>
-                    <span class="punto-aviso" role="img" aria-label={ui.noticesDot} />
-                  </span>
-                )}
-                {item.id === 'balance' && (
-                  <span class="rail-n mono" data-face-balance data-locale={locale} hidden />
-                )}
-                {item.id === 'agenda' && (
-                  <span class="rail-n mono" data-you-count="agenda" data-ritual-ends={ends} hidden />
-                )}
-                {item.id === 'worlds' && <span class="rail-n mono" data-you-count="worlds" hidden />}
-                {item.id === 'your-communities' && (
-                  <span class="rail-n mono" data-you-count="communities" hidden />
-                )}
-              </a>
-            </li>
+            <a
+              href={localeHref(locale, item.path)}
+              class="opc rail-item-menu"
+              aria-current={ariaCurrent(state)}
+              data-metric={`you-${item.id}`}
+            >
+              <Icon name={navIcon(item, state)} size={20} use />
+              {ui.you[item.id]}
+              {item.id === 'notices' && (
+                <span class="der" data-notices-dot hidden>
+                  <span class="punto-aviso" role="img" aria-label={ui.noticesDot} />
+                </span>
+              )}
+              {item.id === 'balance' && (
+                <span class="der mono" data-face-balance data-locale={locale} hidden />
+              )}
+              {item.id === 'agenda' && (
+                <span class="der mono" data-you-count="agenda" data-ritual-ends={ends} hidden />
+              )}
+              {item.id === 'worlds' && <span class="der mono" data-you-count="worlds" hidden />}
+              {item.id === 'your-communities' && (
+                <span class="der mono" data-you-count="communities" hidden />
+              )}
+            </a>
           );
         })
       }
-    </ul>
-  </nav>
-  <p class="rail-txt" data-session-out>{ui.signedOutLine}</p>
+      <hr />
+      <p class="pop-etiqueta" data-face-panels-label hidden>{ui.face.panels}</p>
+      <a href={localeHref(locale, PANEL_PATH)} class="opc" data-metric="chrome-panels" data-face-panels-door>
+        <Icon name={panelIcon} size={20} use />
+        {ui.panels}
+      </a>
+      <template data-face-panel>
+        <a href={localeHref(locale, PANEL_PATH)} class="opc" data-metric="chrome-panel-org">
+          <Icon name={panelIcon} size={20} use />
+          <span></span>
+        </a>
+      </template>
+      <hr />
+      <p class="pop-etiqueta">{ui.create}</p>
+      {
+        CREATE_ITEMS.map((item) => (
+          <a href={localeHref(locale, item.path)} class="opc" data-metric={`you-create-${item.id}`}>
+            <Icon name={item.icon} size={20} use />
+            {ui.createItems[item.id].title}
+          </a>
+        ))
+      }
+    </nav>
 
-  <div class="rail-pie">
-    <a
-      href={localeHref(locale, SETTINGS_PATH)}
-      class="pie-link"
-      data-rail-tip={ui.settings}
-      data-metric="you-settings"
-    >
+    <hr />
+    <a href={localeHref(locale, SETTINGS_PATH)} class="opc" data-metric="chrome-account-settings">
       <Icon name="gear" size={20} use />
-      <span class="rail-t">{ui.settings}</span>
+      {ui.settings}
     </a>
     <div class="pie-seg">
       <div class="seg" role="group" aria-label={`${ui.appearance} · ${t.modeToggle}`}>
@@ -225,76 +236,11 @@ const homes = COMMUNITIES.flatMap((community) => {
       </div>
       <LanguageMenu locale={locale} basePath={basePath} label={t.languageSelector} />
     </div>
-    <a
-      href={signOutHref(locale)}
-      class="pie-link"
-      data-session-in
-      hidden
-      data-rail-tip={ui.signOut}
-      data-metric="you-sign-out"
-    >
+    <a href={signOutHref(locale)} class="opc" data-session-in hidden data-metric="chrome-sign-out">
       <Icon name="sign-out" size={20} use />
-      <span class="rail-t">{ui.signOut}</span>
+      {ui.face.signOut}
     </a>
   </div>
-</aside>
-
-<div id="menu-cara" class="pop pop-fijo" popover role="group" aria-label={ui.faceMenu} data-rail-menu>
-  <p class="pop-nombre mono" data-face-name data-session-short></p>
-  <p class="pop-etiqueta">{ui.rankLine}</p>
-  <p class="pop-rango">
-    {ranks.map((rank) => <span data-rank-name={rank.id} hidden>{rank.name}</span>)}
-  </p>
-  <hr />
-  <a href={localeHref(locale, PROFILE_PATH)} class="opc" data-metric="chrome-profile">
-    <Icon name="user-circle" size={20} use />
-    {ui.face.profile}
-  </a>
-  <a href={localeHref(locale, '/saldo/')} class="opc" data-metric="chrome-balance">
-    <Icon name="coins" size={20} />
-    {ui.face.balance}
-    <span class="der mono" data-face-balance data-locale={locale} hidden></span>
-  </a>
-  <hr />
-  <p class="pop-etiqueta" data-face-panels-label hidden>{ui.face.panels}</p>
-  <a href={localeHref(locale, PANEL_PATH)} class="opc" data-metric="chrome-panels" data-face-panels-door>
-    <Icon name={panelIcon} size={20} use />
-    {ui.panels}
-  </a>
-  <template data-face-panel>
-    <a href={localeHref(locale, PANEL_PATH)} class="opc" data-metric="chrome-panel-org">
-      <Icon name={panelIcon} size={20} use />
-      <span></span>
-    </a>
-  </template>
-  <hr />
-  <a href={localeHref(locale, SETTINGS_PATH)} class="opc" data-metric="chrome-account-settings">
-    <Icon name="gear" size={20} use />
-    {ui.settings}
-  </a>
-  <a href={signOutHref(locale)} class="opc" data-metric="chrome-sign-out">
-    <Icon name="sign-out" size={20} use />
-    {ui.face.signOut}
-  </a>
-</div>
-
-<div id="menu-crear" class="pop pop-fijo" popover role="group" aria-label={ui.create} data-rail-menu>
-  <p class="pop-etiqueta">{ui.create}</p>
-  {
-    CREATE_ITEMS.map((item) => (
-      <a
-        href={localeHref(locale, item.path)}
-        class="opc crear-opc"
-        data-metric={`you-create-${item.id}`}
-      >
-        <Icon name={item.icon} size={20} use />
-        <span>
-          <b>{ui.createItems[item.id].title}</b>
-          <small>{ui.createItems[item.id].what}</small>
-        </span>
-      </a>
-    ))
-  }
 </div>
 
 <script>
@@ -402,7 +348,7 @@ const homes = COMMUNITIES.flatMap((community) => {
      Signed in (the session reader above writes `data-session` on <html>),
      one read of /api/notices with the moment last seen — the same key
      lib/notices-client.ts keeps, `numinia-notices-seen` — and something
-     newer shows the dot on the rail, the phone's sheet and the «Tú» tab;
+     newer shows the dot on the face, its menu, the phone's sheet and the «Tú» tab;
      never a number. On «Avisos» itself the page reads and marks seen, so
      nothing is asked twice; its event hides the dot. */
   const SEEN = 'numinia-notices-seen';
@@ -442,7 +388,7 @@ const homes = COMMUNITIES.flatMap((community) => {
 </script>
 
 <script>
-  /* «Entrar al mundo» at the top of this rail (t_7c4d3d1e): the same door
+  /* «Entrar al mundo» at the top right (t_7c4d3d1e): the same door
      Featured.astro shows once a world answers someone inside, read
      straight from /api/live (CityRail reads the same endpoint for its own
      «Ahora en la ciudad» list) — nobody inside, no answer or no
@@ -480,19 +426,12 @@ const homes = COMMUNITIES.flatMap((community) => {
 </script>
 
 <style>
-  .rail-vivo-puerta {
-    padding: 0 var(--s3) var(--s2);
-  }
-  .rail-vivo-puerta[hidden] {
+  .tu-vivo[hidden],
+  .rail-entrar-vivo[hidden] {
     display: none;
   }
   .rail-entrar-vivo {
-    justify-content: flex-start;
-    width: 100%;
     color: var(--enlace);
     border-color: var(--enlace);
-  }
-  .rail-entrar-vivo[hidden] {
-    display: none;
   }
 </style>

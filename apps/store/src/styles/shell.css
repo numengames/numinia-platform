@@ -1,11 +1,12 @@
 /*
  * The app shell of numinia.com, v3 «La ciudad y tú» (drawn in the approved
- * wireframe numinia-app-v3): two mirrored rails — the city on the left,
- * you on the right — with the page between them at its full width. Each
- * rail is 256 px, 72 px folded (html[data-rail-city|data-rail-you], set
- * before paint by BaseLayout's boot script). Below 768 px upright the rails
- * give way to a header, a bottom bar and the «Tú» sheet; a phone on its
- * side keeps both rails folded as icon edges.
+ * wireframe numinia-app-v3), with what is yours folded into a menu: the
+ * city's rail on the left, your face at the page's top right (its menu
+ * holds what was the right rail), the page at its full width. The rail is
+ * 256 px, 72 px folded (html[data-rail-city], set before paint by
+ * BaseLayout's boot script). Below 768 px upright the rail gives way to a
+ * header, a bottom bar and the «Tú» sheet; a phone on its side keeps the
+ * rail folded as an icon edge.
  *
  * Values only from the kit (sistema.css): colours, spaces, the two radii
  * (6 px controls, 8 px frames) plus full circles. Icons sit without boxes
@@ -17,14 +18,10 @@
   --rail: 256px;
   --rail-plegada: 72px;
   --rail-izq: var(--rail);
-  --rail-der: var(--rail);
   --barra-movil: 64px;
 }
 html[data-rail-city='collapsed'] {
   --rail-izq: var(--rail-plegada);
-}
-html[data-rail-you='collapsed'] {
-  --rail-der: var(--rail-plegada);
 }
 
 /* The chrome's sprite (ChromeSprite): defined, never drawn itself. */
@@ -66,10 +63,10 @@ html[data-rail-you='collapsed'] {
   transform: none;
 }
 
-/* ---- The frame: city · page · you ------------------------------------- */
+/* ---- The frame: city · page (you at its top right) -------------------- */
 .app {
   display: grid;
-  grid-template-columns: var(--rail-izq) minmax(0, 1fr) var(--rail-der);
+  grid-template-columns: var(--rail-izq) minmax(0, 1fr);
   min-height: 100vh;
 }
 .app-centro {
@@ -115,9 +112,6 @@ html[data-rail-you='collapsed'] {
 .rail-ciudad {
   border-right: 1px solid var(--linea);
 }
-.rail-tu {
-  border-left: 1px solid var(--linea);
-}
 .rail-cab {
   display: flex;
   align-items: center;
@@ -126,9 +120,6 @@ html[data-rail-you='collapsed'] {
   min-height: 52px;
   margin-bottom: var(--s3);
   padding: 0 4px 0 8px;
-}
-.rail-tu .rail-cab {
-  padding: 0 8px 0 4px;
 }
 /* The Khepri with the Numinia wordmark, in currentColor. */
 .rail-marca {
@@ -178,12 +169,8 @@ html[data-rail-you='collapsed'] {
   color: var(--enlace);
 }
 /* The fold's icon points where the rail goes. */
-.rail-tu .rail-plegar .icono,
 html[data-rail-city='collapsed'] .rail-ciudad .rail-plegar .icono {
   transform: scaleX(-1);
-}
-html[data-rail-you='collapsed'] .rail-tu .rail-plegar .icono {
-  transform: none;
 }
 
 /* «Buscar» and its twin «Crear»: field-shaped, the same height. */
@@ -454,7 +441,7 @@ html[data-rail-you='collapsed'] .rail-tu .rail-plegar .icono {
 .yo:focus-visible .yo-txt b {
   color: var(--enlace);
 }
-:is(.rail, .hoja-tu, .barra-movil) .cara {
+:is(.rail, .cabeza-tu, .hoja-tu, .barra-movil) .cara {
   position: relative;
   display: grid;
   flex: none;
@@ -465,11 +452,11 @@ html[data-rail-you='collapsed'] .rail-tu .rail-plegar .icono {
   border-radius: 50%;
   color: var(--texto-2);
 }
-:is(.rail, .hoja-tu) .cara.vacia {
+:is(.rail, .cabeza-tu, .hoja-tu) .cara.vacia {
   background: var(--superficie);
   color: var(--texto-3);
 }
-:is(.rail, .hoja-tu, .barra-movil) img[data-face-img] {
+:is(.rail, .cabeza-tu, .hoja-tu, .barra-movil) img[data-face-img] {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -477,14 +464,110 @@ html[data-rail-you='collapsed'] .rail-tu .rail-plegar .icono {
   border-radius: 50%;
   object-fit: cover;
 }
-:is(.rail, .hoja-tu, .barra-movil) img[data-face-img][hidden] {
+:is(.rail, .cabeza-tu, .hoja-tu, .barra-movil) img[data-face-img][hidden] {
   display: none;
 }
-.rail-crear {
-  margin-bottom: 0;
+/* ---- You, top right: the door, your face and its menu ----------------- */
+/* On the line of the city rail's logo at the top (14 + 6 + 22 = the rail's
+   16 px padding + half its 52 px head), then stuck to the window's top like
+   the rail beside it: your face never scrolls out of reach. A 56 px band,
+   the phone header's, frosted over the page. */
+.cabeza-tu {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s3);
+  min-height: 56px;
+  margin-top: 14px;
+  padding: 6px var(--s7);
+  background: color-mix(in srgb, var(--fondo) 90%, transparent);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
-.rail-crear .caja-caret {
+.tu-vivo {
+  display: flex;
+  gap: var(--s2);
+}
+.tu-vivo .rail-caja {
+  width: auto;
+}
+.tu-entrar {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--s4);
+  border: 1px solid var(--enlace);
+  border-radius: var(--radio-control);
+  color: var(--enlace);
+  font: 500 0.95rem var(--sans);
+  text-decoration: none;
+  transition:
+    color 120ms var(--ciclo),
+    background-color 120ms var(--ciclo);
+}
+.tu-entrar:hover,
+.tu-entrar:focus-visible {
+  background: color-mix(in srgb, var(--enlace) 14%, transparent);
+  color: var(--texto);
+}
+.tu-entrar[hidden] {
+  display: none;
+}
+.cabeza-tu .yo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 2px 6px 2px 2px;
+  border: 0;
+  border-radius: var(--radio-control);
+  background: none;
   color: var(--texto-2);
+  cursor: pointer;
+  transition: color 120ms var(--ciclo);
+}
+.cabeza-tu .yo[hidden] {
+  display: none;
+}
+.cabeza-tu .yo:hover,
+.cabeza-tu .yo:focus-visible,
+.cabeza-tu .yo[aria-expanded='true'] {
+  color: var(--enlace);
+}
+.cabeza-tu .yo:hover .cara,
+.cabeza-tu .yo[aria-expanded='true'] .cara {
+  box-shadow: 0 0 0 2px var(--enlace);
+}
+/* The bell's dot rides on the face: something new, seen with the menu shut. */
+.yo-punto {
+  position: absolute;
+  top: 4px;
+  left: 32px;
+  border: 2px solid var(--fondo);
+  width: 12px;
+  height: 12px;
+}
+/* The menu: the rows of «Tu menú», a count or a dot at the row's end. */
+.menu-tu .opc[aria-current] {
+  color: var(--texto);
+  font-weight: 600;
+}
+.menu-tu .opc[aria-current] .icono {
+  color: var(--enlace);
+}
+.menu-tu .opc-entrar {
+  color: var(--enlace);
+  font-weight: 500;
+}
+.menu-tu .der[hidden] {
+  display: none;
+}
+.menu-tu .der .punto-aviso {
+  display: block;
 }
 
 /* The foot: on the left how it works, the house's doors and the folded
@@ -569,8 +652,7 @@ html[data-rail-you='collapsed'] .rail-tu .rail-plegar .icono {
 /* ---- Folded: icons only ------------------------------------------------ */
 /* Every word stays for the screen reader; the pointer and the keyboard get
    a tooltip that stays while hovered and goes with Esc (RailScript). */
-html[data-rail-city='collapsed'] .rail-ciudad,
-html[data-rail-you='collapsed'] .rail-tu {
+html[data-rail-city='collapsed'] .rail-ciudad {
   align-items: center;
   padding-inline: var(--s2);
 }
@@ -580,15 +662,8 @@ html[data-rail-city='collapsed'] .rail-ciudad .rail-cab {
   min-height: auto;
   padding: 0;
 }
-html[data-rail-you='collapsed'] .rail-tu .rail-cab {
-  flex-direction: column-reverse;
-  justify-content: center;
-  min-height: auto;
-  padding: 0;
-}
 html[data-rail-city='collapsed'] .rail-ciudad .rail-t,
-html[data-rail-city='collapsed'] .rail-ciudad .vivo-txt,
-html[data-rail-you='collapsed'] .rail-tu .rail-t {
+html[data-rail-city='collapsed'] .rail-ciudad .vivo-txt {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -598,14 +673,10 @@ html[data-rail-you='collapsed'] .rail-tu .rail-t {
 }
 html[data-rail-city='collapsed']
   .rail-ciudad
-  :is(.rail-palabra, kbd, .rail-eti, .pie-pliegue, .pie-firma, .rail-n:not([data-live-total])),
-html[data-rail-you='collapsed']
-  .rail-tu
-  :is(.caja-caret, .rail-txt, .pie-seg, .rail-n:not([data-notices-dot])) {
+  :is(.rail-palabra, kbd, .rail-eti, .pie-pliegue, .pie-firma, .rail-n:not([data-live-total])) {
   display: none;
 }
-html[data-rail-city='collapsed'] .rail-ciudad .rail-caja,
-html[data-rail-you='collapsed'] .rail-tu .rail-caja {
+html[data-rail-city='collapsed'] .rail-ciudad .rail-caja {
   justify-content: center;
   width: 44px;
   height: 44px;
@@ -614,8 +685,7 @@ html[data-rail-you='collapsed'] .rail-tu .rail-caja {
   border-color: transparent;
   background: none;
 }
-html[data-rail-city='collapsed'] .rail-ciudad .rail-item,
-html[data-rail-you='collapsed'] .rail-tu .rail-item {
+html[data-rail-city='collapsed'] .rail-ciudad .rail-item {
   justify-content: center;
   width: 52px;
   padding: 0;
@@ -628,8 +698,7 @@ html[data-rail-city='collapsed'] .rail-ciudad .rail-sep {
   width: 36px;
   margin-inline: auto;
 }
-html[data-rail-city='collapsed'] .rail-ciudad .pie-link,
-html[data-rail-you='collapsed'] .rail-tu .pie-link {
+html[data-rail-city='collapsed'] .rail-ciudad .pie-link {
   justify-content: center;
   width: 44px;
   padding: 0;
@@ -658,13 +727,6 @@ html[data-rail-city='collapsed'] .rail-ciudad [data-live-total] {
 }
 html[data-rail-city='collapsed'] .rail-ciudad [data-live-n] {
   display: none;
-}
-/* Folded, the bell's dot stays too (mirrored: the rail is on the right). */
-html[data-rail-you='collapsed'] .rail-tu [data-notices-dot] {
-  position: absolute;
-  top: 7px;
-  left: 9px;
-  margin: 0;
 }
 
 /* ---- The folded rails' tooltip ----------------------------------------- */
@@ -1009,7 +1071,8 @@ html[data-js='on'] .bocadillo:not([data-placed]) {
     /* The bottom bar never covers the end of the page. */
     padding-bottom: calc(var(--barra-movil) + env(safe-area-inset-bottom, 0px));
   }
-  .rail {
+  .rail,
+  .cabeza-tu {
     display: none;
   }
   :where(.app-centro) > main {
