@@ -1,0 +1,3 @@
+- FIX — An encounter whose dates have passed no longer shows as upcoming: it leaves the front page, the encounters list and «Ahora», and loses its «Me apunto», without anyone marking it held by hand. The reader's browser does the same between publications.
+- FIX — A multi-day encounter says «now» until its last day ends, no longer «held» from its second day.
+- FIX — The calendar's month grid starts at the current month at the latest, so an encounter published for the coming days always has its day.

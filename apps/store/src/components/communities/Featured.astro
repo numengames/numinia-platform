@@ -21,6 +21,7 @@ import { AHORA_UI } from '../../i18n/ahora';
 import { COMMUNITIES_UI, fill } from '../../i18n/communities';
 import {
   pick,
+  ritualEndMs,
   whenLong,
   whenShort,
   type Community,
@@ -147,7 +148,9 @@ const laterParts = a.laterInCity.split('{x}');
                 {ritual && ritual.status === 'upcoming' && (
                   <span class="chip vivo">
                     <span class="punto" />
-                    <span data-countdown={ritual.start}>{whenShort(ritual, locale)}</span>
+                    <span data-countdown={ritual.start} data-countdown-end={ritualEndMs(ritual)}>
+                      {whenShort(ritual, locale)}
+                    </span>
                   </span>
                 )}
                 {ritual?.city && <span class="chip ambar">{a.ofTheCity}</span>}
@@ -175,6 +178,7 @@ const laterParts = a.laterInCity.split('{x}');
                       signIn={signIn}
                       metric="home-featured-rsvp"
                       large
+                      until={ritualEndMs(ritual)}
                     />
                     <a
                       class="btn btn-fantasma"

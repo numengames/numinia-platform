@@ -48,6 +48,46 @@ async function signedIn(page: Page): Promise<void> {
   );
 }
 
+/**
+ * What the panel lists for a community, read from the page: the figure in
+ * each heading («Próximos · N», «Ya celebrados · M») and the rows under it.
+ * Which encounter is upcoming and which held moves with the clock (the build
+ * settles an upcoming one whose end passed), so the specs compare the page
+ * with itself and with the community's own calendar, never with a hand-kept
+ * list of ids.
+ */
+async function lists(page: Page, id: string) {
+  return page.locator(`[data-gatherings="${id}"]`).evaluate((section) => {
+    const out: { heading: string; count: number; ids: string[] }[] = [];
+    for (const node of Array.from(section.children)) {
+      if (node.matches('h2.encuentros-h2')) {
+        const heading = (node.textContent ?? '').replace(/\s+/g, ' ').trim();
+        out.push({ heading, count: Number(heading.split('·').pop()?.trim()), ids: [] });
+      } else if (out.length > 0 && node.matches('ul')) {
+        out[out.length - 1]!.ids = Array.from(node.querySelectorAll('[data-gathering]')).map(
+          (row) => row.getAttribute('data-gathering') ?? '',
+        );
+      }
+    }
+    return { upcoming: out[0]!, held: out[1]! };
+  });
+}
+
+/** The community's calendar feed: each encounter's id and first day, in feed order. */
+async function starts(page: Page, community: string): Promise<Map<string, string>> {
+  const response = await page.request.get(`/communities/${community}/calendar.ics`);
+  const found = new Map<string, string>();
+  for (const event of (await response.text()).split('BEGIN:VEVENT').slice(1)) {
+    const id = /UID:(.+?)@/.exec(event)?.[1];
+    const day = /DTSTART[^:]*:(\d{8})/.exec(event)?.[1];
+    if (id && day) found.set(id, day);
+  }
+  return found;
+}
+
+// The Numinia anniversary ended on 2026-11-03: held for good, whatever today is.
+const ANNIVERSARY = 'numinia-anniversary-2026';
+
 const panel = (page: Page) => page.locator('[data-org-panel]');
 
 async function open(page: Page, path: string): Promise<void> {
@@ -95,21 +135,30 @@ test.describe('the panel’s «Encuentros»', () => {
       'href',
       '/communities/numen-games/calendar.ics',
     );
-    await expect(list).toContainText('Próximos · 2');
-    const rows = list.locator('[data-gathering]');
-    expect(
-      await rows.evaluateAll((all) => all.map((row) => row.getAttribute('data-gathering'))),
-    ).toEqual(['numinia-anniversary-2026', 'public-domain-day-2027']);
-    await expect(rows.first().locator('a')).toHaveAttribute(
-      'href',
-      '/es/rituals/numinia-anniversary-2026/',
+    const { upcoming, held } = await lists(page, 'numen-games');
+    // The figure in each heading is the rows under it.
+    expect(upcoming.heading).toMatch(/^Próximos · \d+$/);
+    expect(held.heading).toMatch(/^Ya celebrados · \d+$/);
+    expect(upcoming.count).toBe(upcoming.ids.length);
+    expect(held.count).toBe(held.ids.length);
+    // Each encounter is in exactly one list; the anniversary is over for good.
+    expect(upcoming.ids).not.toContain(ANNIVERSARY);
+    expect(held.ids).toContain(ANNIVERSARY);
+    expect(new Set([...upcoming.ids, ...held.ids]).size).toBe(
+      upcoming.ids.length + held.ids.length,
     );
-    await expect(rows.first()).toContainText('El Aniversario de Numinia');
-    await expect(rows.first()).toContainText('2026');
-    // Nothing held yet: said, not an empty box.
-    await expect(list).toContainText('Ya celebrados · 0');
-    await expect(list.locator('[data-gatherings-empty]')).toHaveText(
-      'Aún no hay ninguno celebrado.',
+    const anniversary = list.locator(`[data-gathering="${ANNIVERSARY}"]`);
+    await expect(anniversary.locator('a')).toHaveAttribute('href', `/es/rituals/${ANNIVERSARY}/`);
+    await expect(anniversary).toContainText('El Aniversario de Numinia');
+    await expect(anniversary).toContainText('2026');
+    // Upcoming nearest first, by the community's own calendar.
+    const days = await starts(page, 'numen-games');
+    const dayList = upcoming.ids.map((id) => days.get(id) ?? '');
+    expect(dayList.every((day) => day !== '')).toBe(true);
+    expect(dayList).toEqual([...dayList].sort());
+    // An empty list says so, not an empty box.
+    await expect(list.locator('[data-gatherings-empty]')).toHaveCount(
+      (upcoming.count === 0 ? 1 : 0) + (held.count === 0 ? 1 : 0),
     );
     await shot(page, 'panel-encuentros-desktop');
   });
@@ -141,19 +190,21 @@ test.describe('the panel’s «Encuentros»', () => {
   });
 
   for (const [prefix, title, upcoming] of [
-    ['', 'Gatherings', 'Coming · 2'],
-    ['/ja', '集まり', 'これから · 2'],
-    ['/ko', '모임', '다가오는 모임 · 2'],
-    ['/pt-br', 'Encontros', 'Próximos · 2'],
+    ['', 'Gatherings', 'Coming · '],
+    ['/ja', '集まり', 'これから · '],
+    ['/ko', '모임', '다가오는 모임 · '],
+    ['/pt-br', 'Encontros', 'Próximos · '],
   ] as const) {
     test(`speaks ${prefix || '/en'}`, async ({ page }) => {
       await signedIn(page);
       await open(page, `${prefix}/panel/encuentros/?org=${GAMES.id}`);
       await expect(page.locator('h1')).toHaveText(title);
-      await expect(page.locator('[data-gatherings="numen-games"]')).toContainText(upcoming);
-      await expect(page.locator('[data-gathering="numinia-anniversary-2026"] a')).toHaveAttribute(
+      const { upcoming: coming } = await lists(page, 'numen-games');
+      expect(coming.heading.startsWith(upcoming)).toBe(true);
+      expect(coming.count).toBe(coming.ids.length);
+      await expect(page.locator(`[data-gathering="${ANNIVERSARY}"] a`)).toHaveAttribute(
         'href',
-        `${prefix}/rituals/numinia-anniversary-2026/`,
+        `${prefix}/rituals/${ANNIVERSARY}/`,
       );
     });
   }

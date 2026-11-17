@@ -6,6 +6,12 @@
  * reader without JavaScript simply sees the date. Inline (no external JS on
  * the home: the landing budget) and tiny.
  *
+ * The same clock settles what ended since the build (lib/communities
+ * settle): a `data-countdown-end` (ms) keeps a running ritual «now» and
+ * says «held» once over; whatever carries `data-until` (ms) — an upcoming
+ * card, a row, a «Me apunto» — gets `data-over` once that moment passed,
+ * and the shell's stylesheet hides it.
+ *
  * Templates come from the page's messages; "{n}" is the number.
  */
 import type { CommunitiesMessages } from '../../i18n/communities';
@@ -31,14 +37,22 @@ const templates = {
     var t = JSON.parse(script.getAttribute('data-countdown-templates'));
     var now = new Date();
     var today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    var at = now.getTime();
+    document.querySelectorAll('[data-until]').forEach(function (el) {
+      var until = Number(el.getAttribute('data-until'));
+      if (until && at >= until) el.setAttribute('data-over', '');
+    });
     document.querySelectorAll('[data-countdown]').forEach(function (el) {
       var start = el.getAttribute('data-countdown');
       if (!start) return;
       var day = start.length === 10 ? Date.parse(start + 'T00:00:00Z') : Date.parse(start);
       if (isNaN(day)) return;
       var days = Math.round((Date.UTC(new Date(day).getUTCFullYear(), new Date(day).getUTCMonth(), new Date(day).getUTCDate()) - today) / 864e5);
+      var end = Number(el.getAttribute('data-countdown-end'));
       var text;
-      if (days < 0) text = t.held;
+      if (end && at >= end) text = t.held;
+      else if (end && days <= 0) text = t.now;
+      else if (days < 0) text = t.held;
       else if (days === 0) text = t.now;
       else if (days === 1) text = t.tomorrow;
       else if (days < 14) text = t.days.replace('{n}', days);

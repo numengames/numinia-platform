@@ -90,6 +90,12 @@ html[data-rail-city='collapsed'] {
   outline: none;
 }
 
+/* Over since the build: an upcoming card, row or «Me apunto» whose ritual
+   ended (Countdown.astro marks it; lib/communities settle does it at build). */
+[data-until][data-over] {
+  display: none !important;
+}
+
 /* ---- The rails --------------------------------------------------------- */
 /* Sticky, the window's height, above the page. Their menus live outside,
    in the top layer, so the scrolling rail never clips them. */

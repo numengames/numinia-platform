@@ -27,6 +27,7 @@ import {
   firstMonth,
   monthsToCover,
   pick,
+  ritualEndMs,
   upcoming,
 } from '../../lib/communities';
 import { byMonth } from '../../lib/encuentros';
@@ -47,7 +48,11 @@ const live = CREAR_ENCUENTRO_UI[locale].liveHeading;
 const prefix = locale === 'en' ? '' : `/${locale}`;
 const coming = upcoming(RITUALS);
 const groups = byMonth(coming, locale);
-const from = firstMonth(coming, { year: 2026, month: 10 });
+const today = new Date();
+const from = firstMonth(coming, {
+  year: today.getUTCFullYear(),
+  month: today.getUTCMonth() + 1,
+});
 const months = calendarMonths(from, monthsToCover(from, coming, 4), coming, locale);
 ---
 
@@ -96,7 +101,7 @@ const months = calendarMonths(from, monthsToCover(from, coming, 4), coming, loca
               {group.rituals.map((ritual) => {
                 const date = dayAndMonth(ritual, locale);
                 return (
-                  <li data-enc-row={ritual.id}>
+                  <li data-enc-row={ritual.id} data-until={ritualEndMs(ritual)}>
                     <span class="fecha">
                       <b>{date.day}</b>
                       {date.month}
@@ -111,7 +116,7 @@ const months = calendarMonths(from, monthsToCover(from, coming, 4), coming, loca
                         <p>
                           {ritual.city ? ui.ofTheCity : communityOf(ritual.community).name} ·{' '}
                           {pick(ritual.where, locale)}
-                          <span class="falta" data-countdown={ritual.start} />
+                          <span class="falta" data-countdown={ritual.start} data-countdown-end={ritualEndMs(ritual)} />
                         </p>
                       </div>
                       <span class="fila modo">

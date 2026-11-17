@@ -11,6 +11,7 @@ import { Buffer } from 'node:buffer';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { Given, When, Then } from '@cucumber/cucumber';
+import { upcomingOnFile } from './encuentros.steps.mjs';
 import { parseEnv, EnvValidationError } from '@numinia/domain';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -698,7 +699,9 @@ Then('every public community has a page and every prepared one has none', async 
 Then('the home lists the upcoming rituals and the city feed is a calendar', async function () {
   const home = await readFile(path.join(this.distDir, 'index.html'), 'utf8');
   const cards = (home.match(/data-metric="ritual-card"/g) ?? []).length;
-  assert.ok(cards >= 3, `home shows ${cards} ritual cards`);
+  // Which rituals are still ahead moves with the date: the register's files say.
+  const ahead = await upcomingOnFile();
+  assert.equal(cards, ahead.length, `home shows ${cards} ritual cards, ${ahead.length} ahead`);
   // The «full calendar» button left the home with the app shell (v0.83.0):
   // the calendar is one click away in the shell itself.
   const feed = await readFile(path.join(this.distDir, 'calendar.ics'), 'utf8');

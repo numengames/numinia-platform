@@ -22,7 +22,17 @@ test.describe('Ahora, the front page', () => {
         await expect(page.locator(id)).toBeVisible();
       }
       await expect(page.locator('#bazaar')).toHaveCount(0);
-      await expect(page.locator('#alive .tarjeta')).toHaveCount(3);
+      // Which communities have life ahead depends on the date (a ritual that
+      // ended is held): at least one, at most three, each a door to its community.
+      const alive = page.locator('#alive .tarjeta');
+      const found = await alive.count();
+      expect(found).toBeGreaterThanOrEqual(1);
+      expect(found).toBeLessThanOrEqual(3);
+      for (const href of await alive.evaluateAll((cards) =>
+        cards.map((card) => card.getAttribute('href') ?? ''),
+      )) {
+        expect(href).toMatch(/\/communities\/[^/]+\/$/);
+      }
       await expect(page.locator('section.final')).toBeVisible();
       await expect(page.locator('h1')).toHaveCount(1);
     });
