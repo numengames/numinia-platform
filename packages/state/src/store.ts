@@ -49,7 +49,7 @@ export class GitStateStore {
   ) {}
 
   private url(path: string): string {
-    return `https://api.github.com/repos/${this.env.owner}/${this.env.repo}/contents/${path}`;
+    return `${this.env.apiBase}/repos/${this.env.owner}/${this.env.repo}/contents/${path}`;
   }
 
   private headers(): Record<string, string> {

@@ -47,6 +47,35 @@ describe('config — fail closed at boot', () => {
     expect(parseStateEnv({ ...ENV, STATE_BRANCH: 'work' }).branch).toBe('work');
   });
 
+  it('defaults the API base to GitHub', () => {
+    expect(parseStateEnv(ENV).apiBase).toBe('https://api.github.com');
+  });
+
+  it('accepts a loopback API base and normalises it to its origin', () => {
+    expect(parseStateEnv({ ...ENV, STATE_API_URL: 'http://127.0.0.1:4324' }).apiBase).toBe(
+      'http://127.0.0.1:4324',
+    );
+    expect(parseStateEnv({ ...ENV, STATE_API_URL: 'http://localhost:4324/' }).apiBase).toBe(
+      'http://localhost:4324',
+    );
+  });
+
+  it.each([
+    'https://api.github.com',
+    'http://example.com:4324',
+    'http://127.0.0.1.evil.com',
+    'http://127.0.0.1@evil.com',
+    ['http:', '//user', ':pass@127.0.0.1:4324'].join(''),
+    'http://127.0.0.1:4324/prefix',
+    'http://127.0.0.1:4324/?x=1',
+    'ftp://127.0.0.1',
+    'not a url',
+    '',
+  ])('rejects the API base %j, naming the variable', (value) => {
+    expect(() => parseStateEnv({ ...ENV, STATE_API_URL: value })).toThrowError(/STATE_API_URL/);
+    expect(() => parseStateEnv({ ...ENV, STATE_API_URL: value })).toThrowError(StateConfigError);
+  });
+
   it('crashes naming every missing variable — no fallback, ever', () => {
     expect(() => parseStateEnv({})).toThrowError(StateConfigError);
     try {
@@ -128,6 +157,22 @@ describe('records — the census is public, moderation is private (D19)', () => 
 });
 
 describe('GitStateStore — SHA-conditional reads and writes', () => {
+  it('builds its URLs on the local API base when one is configured', async () => {
+    const seen: string[] = [];
+    const fetchImpl = vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+      seen.push(String(input));
+      return jsonResponse(404, {});
+    });
+    const store = new GitStateStore(
+      parseStateEnv({ ...ENV, STATE_API_URL: 'http://127.0.0.1:4324' }),
+      fetchImpl,
+    );
+    await store.list('census');
+    expect(seen).toEqual([
+      'http://127.0.0.1:4324/repos/numengames/numinia-state/contents/census?ref=main',
+    ]);
+  });
+
   it('reads an existing record and returns its sha', async () => {
     const content = toBase64(new TextEncoder().encode(JSON.stringify(CENSUS)));
     const fetchImpl = vi.fn(async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
