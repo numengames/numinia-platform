@@ -34,9 +34,28 @@ type Log = (event: Readonly<Record<string, unknown>>) => void;
 /** The relay's origin: its `/vuelta` is the only `next` the store sends a browser to. */
 export const RELAY_ORIGIN = 'https://mcp.numinia.com';
 
+/**
+ * The relay's origin: https://mcp.numinia.com, unless a self-hosted copy
+ * (the local twin) names its own on loopback. The var is taken only as a
+ * bare origin whose host is 127.0.0.1 or localhost; absent, malformed or
+ * any other host, nothing changes. It mirrors the relay's own
+ * `RELAY_LOOPBACK_ORIGIN` (apps/mcp/src/env.ts) and is never set on numinia.com.
+ */
+export function relayOriginFrom(raw: string | undefined): string {
+  if (raw === undefined) return RELAY_ORIGIN;
+  try {
+    const url = new URL(raw);
+    const web = url.protocol === 'http:' || url.protocol === 'https:';
+    const loopback = url.hostname === '127.0.0.1' || url.hostname === 'localhost';
+    return web && loopback && url.origin === raw ? raw : RELAY_ORIGIN;
+  } catch {
+    return RELAY_ORIGIN;
+  }
+}
+
 /** Where the browser goes once the relay holds the sealed token. */
-export const vueltaHref = (req: string): string =>
-  `${RELAY_ORIGIN}/vuelta?${new URLSearchParams({ req }).toString()}`;
+export const vueltaHref = (req: string, origin: string = RELAY_ORIGIN): string =>
+  `${origin}/vuelta?${new URLSearchParams({ req }).toString()}`;
 
 /** The relay's `HandOffDesk`, as the binding exposes it (answers checked here). */
 export interface RelayDesk {
@@ -109,7 +128,11 @@ async function call<T>(
 }
 
 /** The relay behind its binding. */
-export function relayOf(desk: RelayDesk, log: Log = logEvent): Relay {
+export function relayOf(
+  desk: RelayDesk,
+  log: Log = logEvent,
+  origin: string = RELAY_ORIGIN,
+): Relay {
   return {
     async check(ask) {
       const asked = await call(log, 'ask', () => desk.ask(ask.req), shapes().asked);
@@ -137,7 +160,7 @@ export function relayOf(desk: RelayDesk, log: Log = logEvent): Relay {
       if (kept === 'unavailable') return { ok: false, refusal: 'unavailable' };
       if (!kept.ok) return { ok: false, refusal: 'request' };
       // Only the relay's own way back for this very request.
-      if (kept.next !== vueltaHref(connection.req)) {
+      if (kept.next !== vueltaHref(connection.req, origin)) {
         log({ level: 'warn', kind: 'relay-handoff', action: 'keep', outcome: 'next' });
         return { ok: false, refusal: 'unavailable' };
       }
@@ -158,7 +181,11 @@ export const fixtureRelay: Relay = {
 };
 
 /** The binding as a desk, or null when it is not one (an RPC stub may be a callable object). */
-export function boundRelay(binding: unknown, log: Log = logEvent): Relay | null {
+export function boundRelay(
+  binding: unknown,
+  log: Log = logEvent,
+  origin: string = RELAY_ORIGIN,
+): Relay | null {
   if (binding === null || (typeof binding !== 'object' && typeof binding !== 'function')) {
     return null;
   }
@@ -166,13 +193,22 @@ export function boundRelay(binding: unknown, log: Log = logEvent): Relay | null 
   if (typeof desk.ask !== 'function' || typeof desk.keep !== 'function') return null;
   // Called as methods of the stub (never detached): an RPC stub needs its receiver.
   const stub = binding as RelayDesk;
-  return relayOf({ ask: (req) => stub.ask(req), keep: (handOff) => stub.keep(handOff) }, log);
+  return relayOf(
+    { ask: (req) => stub.ask(req), keep: (handOff) => stub.keep(handOff) },
+    log,
+    origin,
+  );
 }
 
 /** The relay for this Worker: the binding, else the fixture's when the data is the fixture. */
 export function relayFrom(env: {
   readonly binding: unknown;
   readonly dataSource: string | undefined;
+  /** `RELAY_LOOPBACK_ORIGIN`: only a self-hosted copy sets it (see {@link relayOriginFrom}). */
+  readonly loopbackOrigin?: string | undefined;
 }): Relay | null {
-  return boundRelay(env.binding) ?? (env.dataSource === 'fixture' ? fixtureRelay : null);
+  return (
+    boundRelay(env.binding, logEvent, relayOriginFrom(env.loopbackOrigin)) ??
+    (env.dataSource === 'fixture' ? fixtureRelay : null)
+  );
 }

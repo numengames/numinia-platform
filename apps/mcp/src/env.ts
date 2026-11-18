@@ -5,6 +5,7 @@
  */
 import type { OAuthHelpers } from '@cloudflare/workers-oauth-provider';
 import { z } from 'zod';
+import { MCP_PATH, ORIGIN } from './config';
 import type { Cuerpo } from './cuerpo';
 import type { Plazas } from './plazas';
 
@@ -19,6 +20,14 @@ export interface Env {
    * A var of wrangler.jsonc, not a secret.
    */
   STORE_ORIGIN?: string;
+  /**
+   * Self-hosted copies only (the local twin): the relay's own origin when
+   * it answers on loopback, e.g. `http://127.0.0.1:4326`. Taken only as a
+   * bare origin whose host is 127.0.0.1 or localhost; absent, malformed or
+   * any other host, the relay is `https://mcp.numinia.com`. Never set it
+   * in wrangler.jsonc: it is a runtime var of a loopback copy.
+   */
+  RELAY_LOOPBACK_ORIGIN?: string;
   /** The AIs' bodies in worlds, one Durable Object per AI (story W8, cuerpo.ts). */
   CUERPO?: DurableObjectNamespace<Cuerpo>;
   /** Each organization's seats and body time, one Durable Object per organization (plazas.ts). */
@@ -70,8 +79,40 @@ const httpsOrigin = z.string().refine((value) => {
   }
 });
 
-/** numinia.com's origin, or null when it is missing or not a bare https origin. */
+/** The hosts a self-hosted copy answers on: this computer, nothing else. */
+const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(['127.0.0.1', 'localhost']);
+
+/** A bare http(s) origin whose host is 127.0.0.1 or localhost (any port), else null. */
+function loopbackOrigin(value: string | undefined): string | null {
+  if (value === undefined) return null;
+  try {
+    const url = new URL(value);
+    const web = url.protocol === 'https:' || url.protocol === 'http:';
+    return web && LOOPBACK_HOSTS.has(url.hostname) && url.origin === value ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * numinia.com's origin, or null when it is missing or not a bare https
+ * origin — or, for a copy on this computer, a bare loopback http origin.
+ */
 export function storeOrigin(env: Env): string | null {
   const parsed = httpsOrigin.safeParse(env.STORE_ORIGIN);
-  return parsed.success ? parsed.data : null;
+  return parsed.success ? parsed.data : loopbackOrigin(env.STORE_ORIGIN);
+}
+
+/**
+ * The relay's own origin: OAuth issuer, MCP host and the way back from the
+ * consent. https://mcp.numinia.com unless `RELAY_LOOPBACK_ORIGIN` is a
+ * loopback origin (a self-hosted copy); a wrong value changes nothing.
+ */
+export function relayOrigin(env: Env): string {
+  return loopbackOrigin(env.RELAY_LOOPBACK_ORIGIN) ?? ORIGIN;
+}
+
+/** The MCP endpoint's URL on this relay: the RFC 9728 resource and the audience of its tokens. */
+export function relayResource(env: Env): string {
+  return `${relayOrigin(env)}${MCP_PATH}`;
 }

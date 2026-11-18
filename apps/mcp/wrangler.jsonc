@@ -42,6 +42,9 @@
     // a token is. Read with Zod; anything but a bare https origin and the
     // relay starts no authorization. Not a secret.
     "STORE_ORIGIN": "https://numinia.com",
+    // NEVER set RELAY_LOOPBACK_ORIGIN here: it is the runtime var of a
+    // self-hosted copy on loopback (the relay's own origin, e.g.
+    // http://127.0.0.1:4326), taken only for 127.0.0.1 or localhost.
   },
   // The way back to numinia.com (story W10): the relay asks
   // /api/agents/me and /api/agents/pass through a service binding to the

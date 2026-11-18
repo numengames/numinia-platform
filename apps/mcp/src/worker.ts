@@ -25,23 +25,37 @@
  * (limites.ts, story W10).
  */
 import { OAuthProvider } from '@cloudflare/workers-oauth-provider';
-import type { Env } from './env';
+import { relayOrigin, type Env } from './env';
 import { overLimit } from './limites';
-import { PROVIDER_OPTIONS } from './provider';
+import { ORIGIN } from './config';
+import { PROVIDER_OPTIONS, providerOptions } from './provider';
 
 export type { Env } from './env';
 export { HandOffDesk } from './handoff';
-export { capRefresh, PROVIDER_OPTIONS } from './provider';
+export { capRefresh, PROVIDER_OPTIONS, providerOptions } from './provider';
 // The Durable Objects (story W8): one body per AI, one seat desk per organization.
 export { Cuerpo } from './cuerpo';
 export { Plazas } from './plazas';
 
-const provider = new OAuthProvider<Env>(PROVIDER_OPTIONS);
+// One provider per origin the relay answers at: https://mcp.numinia.com, and
+// only in a self-hosted copy its loopback origin (`RELAY_LOOPBACK_ORIGIN`).
+const providers = new Map<string, OAuthProvider<Env>>([
+  [ORIGIN, new OAuthProvider<Env>(PROVIDER_OPTIONS)],
+]);
+
+function providerFor(env: Env): OAuthProvider<Env> {
+  const origin = relayOrigin(env);
+  const known = providers.get(origin);
+  if (known !== undefined) return known;
+  const made = new OAuthProvider<Env>(providerOptions(origin));
+  providers.set(origin, made);
+  return made;
+}
 
 const worker = {
   // `/register` and `/authorize` are counted per address first (story W10, limites.ts).
   fetch: async (request: Request, env: Env, ctx: ExecutionContext): Promise<Response> =>
-    (await overLimit(request, env)) ?? provider.fetch(request, env, ctx),
+    (await overLimit(request, env)) ?? providerFor(env).fetch(request, env, ctx),
 } satisfies ExportedHandler<Env>;
 
 // eslint-disable-next-line no-restricted-syntax -- the Workers runtime calls the module's default export
