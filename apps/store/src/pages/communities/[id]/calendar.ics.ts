@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { COMMUNITIES, RITUALS } from '../../../components/communities/register';
+import { COMMUNITIES, rituals } from '../../../components/communities/register';
 import { icsFeed, ritualsOf } from '../../../lib/communities';
 import { env } from '../../../lib/env';
 
@@ -15,7 +15,7 @@ export function getStaticPaths() {
 export const GET: APIRoute = ({ props }) => {
   const { community } = props as { community: (typeof COMMUNITIES)[number] };
   return new Response(
-    icsFeed(ritualsOf(community.id, RITUALS), COMMUNITIES, {
+    icsFeed(ritualsOf(community.id, rituals()), COMMUNITIES, {
       name: `${community.name} · Numinia`,
       site: env.publicSiteUrl.replace(/\/$/, ''),
       locale: 'en',

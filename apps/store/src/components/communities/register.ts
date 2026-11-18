@@ -41,20 +41,27 @@ export const COMMUNITIES: readonly Community[] = published(REGISTER);
 const knownIds = new Set(REGISTER.map((community) => community.id));
 const publishedIds = new Set(COMMUNITIES.map((community) => community.id));
 
-/** The rituals of the published communities, by date, as they stand at build (lib/communities settle). */
-export const RITUALS: readonly Ritual[] = settle(
-  Object.entries(ritualModules)
-    .map(([path, module]) => {
-      const ritual = parseRitual(idFromPath(path), module.frontmatter);
-      if (!knownIds.has(ritual.community)) {
-        throw new Error(`rituals/${ritual.id}.md: no community "${ritual.community}" on file`);
-      }
-      return ritual;
-    })
-    .filter((ritual) => publishedIds.has(ritual.community))
-    .sort(byStart),
-  new Date(),
-);
+/** The rituals of the published communities on file, by date, as their files say. */
+const FILED: readonly Ritual[] = Object.entries(ritualModules)
+  .map(([path, module]) => {
+    const ritual = parseRitual(idFromPath(path), module.frontmatter);
+    if (!knownIds.has(ritual.community)) {
+      throw new Error(`rituals/${ritual.id}.md: no community "${ritual.community}" on file`);
+    }
+    return ritual;
+  })
+  .filter((ritual) => publishedIds.has(ritual.community))
+  .sort(byStart);
+
+/**
+ * The rituals as they stand now: an upcoming one whose end has passed counts
+ * as held (lib/communities settle). Read the clock here, at render, never at
+ * module scope: the Cloudflare prerender runs inside a Worker, where a clock
+ * read while the module loads is the Unix epoch, so nothing ever settled.
+ */
+export function rituals(now: Date = new Date()): readonly Ritual[] {
+  return settle(FILED, now);
+}
 
 export function communityOf(id: string): Community {
   const community = COMMUNITIES.find((entry) => entry.id === id);

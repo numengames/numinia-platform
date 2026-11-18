@@ -10,8 +10,11 @@ import { loadArchive } from '../../lib/archive';
 import { loadBazaarItems } from '../../lib/bazaar';
 import { cityStats } from '../../lib/city-stats';
 import { computeArchiveStats } from '../../lib/lap/stats';
-import { REGISTER, RITUALS } from '../communities/register';
+import { REGISTER, rituals } from '../communities/register';
 import LapShell from './LapShell.astro';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 
 interface Props {
   locale: SupportedLocale;

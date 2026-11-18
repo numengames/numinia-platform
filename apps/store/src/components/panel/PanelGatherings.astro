@@ -13,8 +13,11 @@ import { PANEL_GATHERINGS_UI } from '../../i18n/panel-gatherings';
 import { localeHref } from '../../lib/app-nav';
 import { communityAccountId } from '../../lib/community-teams';
 import { gatheringsMap } from '../../lib/panel-encounters';
-import { COMMUNITIES, RITUALS } from '../communities/register';
+import { COMMUNITIES, rituals } from '../communities/register';
 import { PanelEncuentros } from './PanelEncuentros';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 
 interface Props {
   locale: SupportedLocale;

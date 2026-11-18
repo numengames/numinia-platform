@@ -15,11 +15,14 @@ import { COMMUNITIES_UI, fill } from '../../i18n/communities';
 import { HOUSE_UI } from '../../i18n/house';
 import { PLACE_IDS, countForm, placeShort, searchText, type PlaceId } from '../../lib/communities';
 import { communityActivity, ringChoice } from '../../lib/house-sphere';
-import { COMMUNITIES, RITUALS } from './register';
+import { COMMUNITIES, rituals } from './register';
 import Icon from '../chrome/Icon.astro';
 import CommunityCard from './CommunityCard.astro';
 import Countdown from './Countdown.astro';
 import HouseSphere from './HouseSphere.astro';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 import '../../styles/communities.css';
 
 interface Props {

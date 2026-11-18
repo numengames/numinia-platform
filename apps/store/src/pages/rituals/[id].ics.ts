@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { COMMUNITIES, RITUALS } from '../../components/communities/register';
+import { COMMUNITIES, rituals } from '../../components/communities/register';
 import { accountsFrom } from '../../lib/accounts-source';
 import { icsFeed, pick, type Ritual } from '../../lib/communities';
 import { env } from '../../lib/env';
@@ -15,7 +15,7 @@ import { runtimeBinding } from '../../lib/runtime-env';
 export const prerender = false;
 
 async function ritualById(id: string): Promise<Ritual | undefined> {
-  if (!isTillRitualId(id)) return RITUALS.find((ritual) => ritual.id === id);
+  if (!isTillRitualId(id)) return rituals().find((ritual) => ritual.id === id);
   const desk = accountsFrom({
     binding: runtimeBinding('TILL_ACCOUNTS'),
     dataSource: process.env.DATA_SOURCE,

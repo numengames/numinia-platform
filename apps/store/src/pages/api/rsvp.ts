@@ -7,7 +7,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { RITUALS } from '../../components/communities/register';
+import { rituals } from '../../components/communities/register';
 import { SESSION_COOKIE } from '../../lib/auth/server';
 import { sessionAsker } from '../../lib/auth/session-wallet';
 import { answerRsvpChange, answerRsvps, rsvpsFrom } from '../../lib/rsvp-source';
@@ -15,7 +15,7 @@ import { runtimeBinding } from '../../lib/runtime-env';
 
 export const prerender = false;
 
-const KNOWN: ReadonlySet<string> = new Set(RITUALS.map((ritual) => ritual.id));
+const KNOWN: ReadonlySet<string> = new Set(rituals().map((ritual) => ritual.id));
 
 const desk = (): ReturnType<typeof rsvpsFrom> =>
   rsvpsFrom({ binding: runtimeBinding('TILL_ACCOUNTS'), dataSource: process.env.DATA_SOURCE });
