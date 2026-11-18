@@ -104,9 +104,23 @@ export class AuthDomainError extends Error {
   }
 }
 
-export function resolveAuthDomain(host: string, dev: boolean = import.meta.env.DEV): string {
+/**
+ * A self-hosted copy of the production build (the local twin) answers on
+ * loopback and is not a dev build. AUTH_LOOPBACK_HOSTS=true — exactly that
+ * string, a runtime var — lets it sign people in there. Production never
+ * sets it; any other value, or none, changes nothing.
+ */
+export function loopbackAuthEnabled(): boolean {
+  return runtimeEnv().AUTH_LOOPBACK_HOSTS === 'true';
+}
+
+export function resolveAuthDomain(
+  host: string,
+  dev: boolean = import.meta.env.DEV,
+  loopback: boolean = loopbackAuthEnabled(),
+): string {
   if (PRODUCTION_AUTH_DOMAINS.has(host)) return host;
-  if (dev && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host)) return host;
+  if ((dev || loopback) && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host)) return host;
   throw new AuthDomainError(host);
 }
 
