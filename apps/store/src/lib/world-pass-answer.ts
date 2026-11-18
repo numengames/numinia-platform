@@ -21,6 +21,8 @@
 
 import { z } from 'zod';
 import type { AccountDesk, Asker } from './accounts';
+import { worldOrigin } from './local-worlds';
+import { runtimeEnv } from './runtime-env';
 import { WorldPassError, buildPassPayload, signPass } from './world-pass';
 import { answer, ask, readWorldId } from './worlds-homes';
 import { logEvent } from './telemetry';
@@ -58,10 +60,11 @@ export const passSaysAccepted = (env: Readonly<Record<string, string | undefined
   env['WORLD_PASS_ACEPTO']?.trim().toLowerCase() === 'si';
 
 /** The world's address for a guest: no pass. */
-export const guestUrl = (host: string): string => `https://${host}/`;
+export const guestUrl = (host: string): string => `${worldOrigin(host, runtimeEnv())}/`;
 
 /** The world's address carrying a pass after `#`, which no server ever sees. */
-export const passUrl = (host: string, token: string): string => `https://${host}/#pass=${token}`;
+export const passUrl = (host: string, token: string): string =>
+  `${worldOrigin(host, runtimeEnv())}/#pass=${token}`;
 
 const refusal = z.object({ ok: z.literal(false), problems: z.array(z.string()) });
 const role = z.object({

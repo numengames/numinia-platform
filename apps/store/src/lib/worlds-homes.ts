@@ -15,6 +15,8 @@
 
 import { z } from 'zod';
 import { NOT_IMPLEMENTED, type AccountDesk, type Asker } from './accounts';
+import { worldOrigin } from './local-worlds';
+import { runtimeEnv } from './runtime-env';
 import { logEvent } from './telemetry';
 import { venueFace, type WorldCard } from './world-index';
 
@@ -419,7 +421,7 @@ export async function answerWorld(
         worldId: id,
         home: asked.value.home,
         manage: asked.value.manage,
-        url: hosts.has(id) ? `https://${hosts.get(id)}/` : null,
+        url: hosts.has(id) ? `${worldOrigin(hosts.get(id) as string, runtimeEnv())}/` : null,
       });
 }
 

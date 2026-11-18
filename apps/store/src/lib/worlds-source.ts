@@ -11,6 +11,8 @@
  * key.
  */
 
+import { worldOrigin } from './local-worlds';
+import { runtimeEnv } from './runtime-env';
 import {
   compareDns,
   dnsFromDesk,
@@ -98,7 +100,7 @@ export async function probeWorld(
 ): Promise<Probe> {
   let response: Response;
   try {
-    response = await fetchImpl(`https://${domain}/status`, {
+    response = await fetchImpl(`${worldOrigin(domain, runtimeEnv())}/status`, {
       headers: { accept: 'application/json', 'user-agent': 'numinia-worlds-room' },
       signal: AbortSignal.timeout(timeoutMs),
     });
@@ -285,7 +287,10 @@ export function parseFace(html: string, domain: string): WorldFace {
   const titleTag = /<title>([^<]*)<\/title>/i.exec(html)?.[1];
   const title = meta(html, 'og:title') ?? (unescape(titleTag ?? '').trim() || null);
   const image = meta(html, 'og:image');
-  return { title, image: image?.startsWith(`https://${domain}/`) ? image : null };
+  return {
+    title,
+    image: image?.startsWith(`${worldOrigin(domain, runtimeEnv())}/`) ? image : null,
+  };
 }
 
 /** Read a world's page like a visitor; null when it does not answer. Never throws. */
@@ -295,7 +300,7 @@ export async function readFace(
   timeoutMs = 3000,
 ): Promise<WorldFace | null> {
   try {
-    const response = await fetchImpl(`https://${domain}/`, {
+    const response = await fetchImpl(`${worldOrigin(domain, runtimeEnv())}/`, {
       headers: { accept: 'text/html', 'user-agent': 'numinia-worlds-room' },
       signal: AbortSignal.timeout(timeoutMs),
     });
