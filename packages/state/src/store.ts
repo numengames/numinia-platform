@@ -45,7 +45,10 @@ export interface WriteOptions {
 export class GitStateStore {
   constructor(
     private readonly env: StateEnv,
-    private readonly fetchImpl: typeof fetch = fetch,
+    // A lambda, not `fetch` itself: called as `this.fetchImpl(...)` the
+    // platform fetch would get the store as `this`, which Workers reject
+    // with «Illegal invocation».
+    private readonly fetchImpl: typeof fetch = (input, init) => fetch(input, init),
   ) {}
 
   private url(path: string): string {

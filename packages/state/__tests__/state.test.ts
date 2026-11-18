@@ -157,6 +157,23 @@ describe('records — the census is public, moderation is private (D19)', () => 
 });
 
 describe('GitStateStore — SHA-conditional reads and writes', () => {
+  it('calls the platform fetch unbound by default, as Workers require', async () => {
+    // On Cloudflare Workers `fetch` throws «Illegal invocation» when called
+    // with another `this`, e.g. as a method of the store.
+    const receivers: unknown[] = [];
+    vi.stubGlobal('fetch', function (this: unknown) {
+      receivers.push(this);
+      return Promise.resolve(jsonResponse(404, {}));
+    });
+    try {
+      await new GitStateStore(parseStateEnv(ENV)).list('census');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(receivers).toHaveLength(1);
+    expect(receivers[0]).not.toBeInstanceOf(GitStateStore);
+  });
+
   it('builds its URLs on the local API base when one is configured', async () => {
     const seen: string[] = [];
     const fetchImpl = vi.fn(async (input: Parameters<typeof fetch>[0]) => {
