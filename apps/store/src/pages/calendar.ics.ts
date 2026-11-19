@@ -6,13 +6,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { COMMUNITIES, RITUALS } from '../components/communities/register';
+import { COMMUNITIES, rituals } from '../components/communities/register';
 import { icsFeed, upcoming } from '../lib/communities';
 import { env } from '../lib/env';
 
 export const GET: APIRoute = () =>
   new Response(
-    icsFeed(upcoming(RITUALS), COMMUNITIES, {
+    icsFeed(upcoming(rituals()), COMMUNITIES, {
       name: 'Numinia',
       site: env.publicSiteUrl.replace(/\/$/, ''),
       locale: 'en',

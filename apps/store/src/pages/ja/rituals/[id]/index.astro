@@ -1,15 +1,18 @@
 ---
 import RitualPage from '../../../../components/communities/RitualPage.astro';
-import { RITUALS, communityOf } from '../../../../components/communities/register';
+import { rituals, communityOf } from '../../../../components/communities/register';
 
 export function getStaticPaths() {
-  return RITUALS.map((ritual) => ({
+  return rituals().map((ritual) => ({
     params: { id: ritual.id },
     props: { ritual, community: communityOf(ritual.community) },
   }));
 }
 
-const { ritual, community } = Astro.props;
+const { community } = Astro.props;
+/** Settled at render (register.ts): the paths may be listed before the clock runs. */
+const ritual =
+  rituals().find((entry) => entry.id === Astro.props.ritual.id) ?? Astro.props.ritual;
 ---
 
 <RitualPage locale="ja" ritual={ritual} community={community} />

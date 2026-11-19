@@ -21,9 +21,12 @@ import { CREATE_ITEMS, PANEL_PATH, localeHref, signInHref } from '../../lib/app-
 import { belongFacts } from '../../lib/belong';
 import { FOLLOWS_KEY } from '../../lib/communities';
 import { communityAccountId } from '../../lib/community-teams';
-import { COMMUNITIES, RITUALS } from './register';
+import { COMMUNITIES, rituals } from './register';
 import Icon from '../chrome/Icon.astro';
 import Cover from './Cover.astro';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 import '../../styles/communities.css';
 
 interface Props {

@@ -1,0 +1,1 @@
+- FIX — Past encounters really leave the front page now: on numinia.com the check against today's date ran before the clock was there and settled nothing, so TRG26, MERGE Madrid and the anniversary stayed in the featured card. The date is now read while each page is drawn.
