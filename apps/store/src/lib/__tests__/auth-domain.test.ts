@@ -33,6 +33,51 @@ describe('resolveAuthDomain', () => {
     expect(() => resolveAuthDomain('127.0.0.1:4321', false)).toThrow(AuthDomainError);
   });
 
+  it('allows loopback hosts in a non-dev build when the loopback flag is on', async () => {
+    const { resolveAuthDomain } = await import('../auth/server');
+    for (const host of ['127.0.0.1:4321', 'localhost:4321', '127.0.0.1', 'localhost']) {
+      expect(resolveAuthDomain(host, false, true)).toBe(host);
+    }
+  });
+
+  it('still rejects loopback hosts in a non-dev build when the flag is off', async () => {
+    const { resolveAuthDomain, AuthDomainError } = await import('../auth/server');
+    expect(() => resolveAuthDomain('127.0.0.1:4321', false, false)).toThrow(AuthDomainError);
+    expect(() => resolveAuthDomain('localhost:4321', false, false)).toThrow(AuthDomainError);
+  });
+
+  it('keeps every other host out even with the loopback flag on', async () => {
+    const { resolveAuthDomain, AuthDomainError } = await import('../auth/server');
+    for (const host of [
+      'evil.com',
+      '127.0.0.1.evil.com',
+      'evil.com:4321',
+      'foo.localhost:4321',
+      '127.0.0.2:4321',
+      '',
+    ]) {
+      expect(() => resolveAuthDomain(host, false, true)).toThrow(AuthDomainError);
+    }
+  });
+
+  it('reads the flag from the runtime env: only the exact string "true" turns it on', async () => {
+    const { loopbackAuthEnabled } = await import('../auth/server');
+    expect(loopbackAuthEnabled()).toBe(false);
+    for (const value of ['1', 'TRUE', 'yes', '']) {
+      vi.stubEnv('AUTH_LOOPBACK_HOSTS', value);
+      expect(loopbackAuthEnabled()).toBe(false);
+    }
+    vi.stubEnv('AUTH_LOOPBACK_HOSTS', 'true');
+    expect(loopbackAuthEnabled()).toBe(true);
+  });
+
+  it('resolves loopback from the env flag by default, in a non-dev call', async () => {
+    const { resolveAuthDomain, AuthDomainError } = await import('../auth/server');
+    expect(() => resolveAuthDomain('127.0.0.1:4321', false)).toThrow(AuthDomainError);
+    vi.stubEnv('AUTH_LOOPBACK_HOSTS', 'true');
+    expect(resolveAuthDomain('127.0.0.1:4321', false)).toBe('127.0.0.1:4321');
+  });
+
   it('fails closed on any host outside the allowlist', async () => {
     const { resolveAuthDomain, AuthDomainError } = await import('../auth/server');
     for (const host of [
