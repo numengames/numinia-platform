@@ -122,6 +122,11 @@ import {
   type TermsAnswer,
 } from './db/community-terms';
 import {
+  linkRepository,
+  organizationRepository,
+  type RepositoryAnswer,
+} from './db/organization-repository';
+import {
   changeSettings,
   happenings,
   settings,
@@ -961,6 +966,30 @@ export class AccountDesk extends WorkerEntrypoint<Env> {
    */
   async publicTerms(communityId: unknown): Promise<PublicTermsAnswer> {
     return publicTerms(this.env.TILL_DB, communityId);
+  }
+
+  // ---- «Each organization's repository» (2026-11-20): the link to its private repository and its state ----
+
+  /** The organization's repository and what became of it: to a member or the house. */
+  async organizationRepository(
+    wallet: unknown,
+    accountId: unknown,
+    house?: unknown,
+  ): Promise<RepositoryAnswer> {
+    return organizationRepository(this.env.TILL_DB, wallet, accountId, house, new Date());
+  }
+
+  /**
+   * Records what became of the repository numinia.com made (`{name, state, problem?}`): only whoever
+   * holds `administrator`. The till calls GitHub for nothing.
+   */
+  async linkRepository(
+    wallet: unknown,
+    accountId: unknown,
+    link: unknown,
+    house?: unknown,
+  ): Promise<RepositoryAnswer> {
+    return linkRepository(this.env.TILL_DB, wallet, accountId, link, house, new Date());
   }
 
   // ---- «Mundos ↔ organizaciones» (2026-10-16): which organization each world belongs to ----
