@@ -339,6 +339,26 @@ export interface DeskTerms {
 export type DeskTermsAnswer = DeskTerms | DeskRefusal;
 
 /**
+ * «Each organization's repository» (2026-11-20): the link the till keeps to a
+ * community's private repository in GitHub — its name, what became of it
+ * and, on an error, what went wrong — and whether the asker may change it
+ * (the `administrator` permission). Null while none was ever asked for.
+ */
+export interface DeskRepositoryLink {
+  name: string;
+  state: 'creating' | 'ready' | 'error' | 'transferred';
+  problem: string | null;
+  updatedAt: string;
+}
+export interface DeskRepository {
+  ok: true;
+  accountId: string;
+  repository: DeskRepositoryLink | null;
+  mayEdit: boolean;
+}
+export type DeskRepositoryAnswer = DeskRepository | DeskRefusal;
+
+/**
  * The terms of a community as ANYBODY may read them (condiciones/w3, no session): the version in
  * force with its points whole, and of every version ever published its number and date — never who
  * published it, never the till account. Null / empty while the community has published nothing.
@@ -665,6 +685,19 @@ export interface AccountDesk {
   ): Promise<DeskTermsAnswer>;
   /** «Normas»: a community's published terms for ANYBODY — no session, no author (optional). */
   publicTerms(communityId: string): Promise<DeskPublicTermsAnswer>;
+  /** «Each organization's repository»: the link to its private repository and its state, to a member or the house (optional). */
+  organizationRepository(
+    wallet: string,
+    accountId: string,
+    house?: boolean,
+  ): Promise<DeskRepositoryAnswer>;
+  /** Records what became of the repository numinia.com made (`{name, state, problem?}`): only `administrator` (optional). */
+  linkRepository(
+    wallet: string,
+    accountId: string,
+    link: unknown,
+    house?: boolean,
+  ): Promise<DeskRepositoryAnswer>;
   /** «Qué ha pasado»: the log, 30 a page, newest first; `before` is the last `seq` seen (optional). */
   happenings(
     wallet: string,
@@ -984,6 +1017,8 @@ export const DESK_METHODS = [
   'communityTerms',
   'publishTerms',
   'publicTerms',
+  'organizationRepository',
+  'linkRepository',
 ] as const satisfies readonly (keyof AccountDesk)[];
 
 /**
@@ -1003,6 +1038,7 @@ export const DESK_METHODS = [
  * routes, /api/agents/pass and /api/agents/me answer 503. And one without the four of «Crear → Un
  * encuentro» (cut M): the ritual routes answer 503 and the lists show the files alone. And one
  * without `communityTerms`, `publishTerms` and `publicTerms` («Normas de vuestros espacios»): the terms routes answer 503.
+ * And one without `organizationRepository` and `linkRepository`: /api/admin/community-repository answers 503.
  */
 export const OPTIONAL_DESK_METHODS: readonly (typeof DESK_METHODS)[number][] = [
   'directory',
@@ -1048,6 +1084,8 @@ export const OPTIONAL_DESK_METHODS: readonly (typeof DESK_METHODS)[number][] = [
   'communityTerms',
   'publishTerms',
   'publicTerms',
+  'organizationRepository',
+  'linkRepository',
 ];
 
 export const SPEND_RANGES: readonly SpendRange[] = ['7d', '30d', '12m'];
