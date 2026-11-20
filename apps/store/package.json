@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.1",
-    "@astrojs/node": "^11.1.9",
+    "@astrojs/node": "^11.1.12",
     "@astrojs/react": "^7.1.2",
     "@astrojs/sitemap": "^3.7.4",
     "@noble/hashes": "2.4.0",
