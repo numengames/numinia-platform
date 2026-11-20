@@ -202,6 +202,15 @@ export function boundAccounts(binding: unknown): AccountDesk | null {
       typeof desk.publicTerms === 'function'
         ? stub.publicTerms(communityId)
         : absent('publicTerms'),
+    // «Each organization's repository»: optional too. Without them the repository route says 503.
+    organizationRepository: (wallet, accountId, house) =>
+      typeof desk.organizationRepository === 'function'
+        ? stub.organizationRepository(wallet, accountId, house)
+        : absent('organizationRepository'),
+    linkRepository: (wallet, accountId, link, house) =>
+      typeof desk.linkRepository === 'function'
+        ? stub.linkRepository(wallet, accountId, link, house)
+        : absent('linkRepository'),
     // Cut 7: the house opens every community at once. Optional too: 503 without it.
     openAllCommunities: (wallet, house, communities) =>
       typeof desk.openAllCommunities === 'function'

@@ -24,6 +24,7 @@
     "@numinia/analytics": "*",
     "@numinia/auth": "*",
     "@numinia/domain": "*",
+    "@numinia/org-repo": "*",
     "@numinia/state": "*",
     "@numinia/ui": "*",
     "@pixiv/three-vrm": "^3.5.5",

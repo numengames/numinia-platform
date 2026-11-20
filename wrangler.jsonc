@@ -24,7 +24,7 @@
   // cannot carry is PUBLIC_THIRDWEB_CLIENT_ID (a public client id, per
   // environment): a build variable in the Worker's Settings → Builds.
   "build": {
-    "command": "node scripts/build-cloudflare.mjs"
+    "command": "node scripts/build-cloudflare.mjs",
   },
   "compatibility_date": "2026-08-15",
   // Astro's Cloudflare adapter also writes apps/store/dist/server/wrangler.json
@@ -34,7 +34,7 @@
   // free-tier 200k events/day. The API routes emit JSON lines (lib/telemetry).
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 1
+    "head_sampling_rate": 1,
   },
   "assets": {
     "directory": "apps/store/dist/client",
@@ -50,6 +50,14 @@
     "GITHUB_REPO_OWNER": "PabloFMM",
     "GITHUB_REPO_NAME": "numinia-digital-goods-data",
     "DATA_SOURCE": "fixture",
+    // «Each organization's repository»: the GitHub App numinia-org-repos, the
+    // GitHub organization its repositories live in and the template they are
+    // made from. Identifiers, not secrets. The App's key is the secret
+    // ORG_REPO_APP_PRIVATE_KEY (PKCS#8), set with `wrangler secret put`.
+    "ORG_REPO_APP_ID": "5846730",
+    "ORG_REPO_INSTALLATION_ID": "183988580",
+    "ORG_REPO_OWNER": "numen-games-nwos-orgs",
+    "ORG_REPO_TEMPLATE": "nwos-workspace-template",
   },
   // The till's Oracle desk (MIS-184): the price room (LAP › Prices) reads the
   // tariff, checks a draft and schedules a dated version through it. A
