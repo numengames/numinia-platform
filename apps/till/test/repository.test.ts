@@ -135,6 +135,7 @@ describe('the migration', () => {
       '0024_community_terms.sql',
       '0025_agent_responsible_house.sql',
       '0026_agent_presence.sql',
+      '0027_organization_repositories.sql',
     ]);
     const { db, sqlite } = migratedTill();
     const tables = rows(
@@ -155,6 +156,7 @@ describe('the migration', () => {
         'keep_marks',
         'ledger_lines',
         'organization_ai_brain',
+        'organization_repositories',
         'organization_settings',
         'ritual_rsvps',
         'rituals',

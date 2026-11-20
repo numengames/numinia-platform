@@ -193,7 +193,7 @@ describe('migration 0026', () => {
     const shim = sqliteD1();
     const names = migrationFiles();
     const at = names.indexOf('0026_agent_presence.sql');
-    expect(at).toBe(names.length - 1);
+    expect(at).toBeGreaterThan(-1);
     for (const name of names.slice(0, at)) {
       shim.sqlite.exec(readFileSync(join(MIGRATIONS, name), 'utf8'));
     }
