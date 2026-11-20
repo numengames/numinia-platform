@@ -40,6 +40,9 @@
     },
     "packages/state": {
       "entry": ["src/index.ts", "__tests__/*.test.ts"]
+    },
+    "packages/org-repo": {
+      "entry": ["src/index.ts", "__tests__/*.test.ts"]
     }
   }
 }
