@@ -9,7 +9,8 @@ import legacyBook from '../../../data/legacy-worlds.json';
 import fixtureFleet from '../../../../fixtures/worlds/fleet.json';
 import { accountsFrom } from '../../../lib/accounts-source';
 import { readMachine, type MachineView } from '../../../lib/fleet';
-import { runtimeBinding } from '../../../lib/runtime-env';
+import { localFleetBase } from '../../../lib/local-worlds';
+import { runtimeBinding, runtimeEnv } from '../../../lib/runtime-env';
 import { FLEET_MACHINES } from '../../../lib/worlds';
 import { fleetWorldHosts, fleetWorldIds } from '../../../lib/worlds-homes';
 import type { FleetEntry } from '../../../lib/world-index';
@@ -31,10 +32,11 @@ async function fleet(): Promise<{ views: readonly MachineView[]; legacy: Legacy 
   if (process.env.DATA_SOURCE === 'fixture') {
     return { views: FIXTURE.machines, legacy: FIXTURE.legacy };
   }
+  const local = localFleetBase(runtimeEnv());
   const views = await Promise.all(
-    FLEET_MACHINES.map((machine) => readMachine(fetch, machine.alias)),
+    FLEET_MACHINES.map((machine) => readMachine(fetch, machine.alias, undefined, local)),
   );
-  return { views, legacy: LEGACY };
+  return { views, legacy: local === null ? LEGACY : [] };
 }
 
 /** The ids the fleet has, and each world's host: one read of the fleet. */

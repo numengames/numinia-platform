@@ -309,8 +309,15 @@ export function doorHost(alias: string): string {
   return `${alias}.${CONTROL_ZONE}`;
 }
 
-export function doorUrl(alias: string, path: string): string {
-  return `https://${doorHost(alias)}/fleet/v1/${path}`;
+/**
+ * Where a machine's door answers: its own address, or — on a self-hosted
+ * install with a local fleet (`LOCAL_FLEET_URL`, lib/local-worlds.ts) —
+ * `<base>/<alias>/fleet/v1/`.
+ */
+export function doorUrl(alias: string, path: string, base: string | null = null): string {
+  return base === null
+    ? `https://${doorHost(alias)}/fleet/v1/${path}`
+    : `${base}/${alias}/fleet/v1/${path}`;
 }
 
 /** The zip of a ready copy. Its 128-bit number is the key to it, for a day. */
@@ -1489,16 +1496,17 @@ export type MachineView =
       readonly status?: number;
     };
 
-/** One machine as its door shows it, or why it could not be read. Never throws. */
+/** One machine as its door shows it, or why it could not be read. `doors`: the local fleet's base (LOCAL_FLEET_URL). Never throws. */
 export async function readMachine(
   fetchImpl: Fetch,
   alias: string,
   timeoutMs = 4000,
+  doors: string | null = null,
 ): Promise<MachineView> {
   const [worlds, log, machine] = await Promise.all([
-    readJson(fetchImpl, doorUrl(alias, 'worlds'), timeoutMs),
-    readJson(fetchImpl, doorUrl(alias, 'log'), timeoutMs),
-    readJson(fetchImpl, doorUrl(alias, 'machine'), timeoutMs),
+    readJson(fetchImpl, doorUrl(alias, 'worlds', doors), timeoutMs),
+    readJson(fetchImpl, doorUrl(alias, 'log', doors), timeoutMs),
+    readJson(fetchImpl, doorUrl(alias, 'machine', doors), timeoutMs),
   ]);
   if (!worlds.ok) {
     return worlds.status === undefined

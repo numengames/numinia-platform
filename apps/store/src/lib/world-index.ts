@@ -130,11 +130,15 @@ export function readOwner(raw: unknown): WorldOwner | null | undefined {
 }
 
 /** A picture the world serves itself, or a title it states; anything else is dropped. */
-function faceOf(face: WorldFace | undefined, domain: string | null): WorldFace {
+function faceOf(face: WorldFace | undefined, domain: string | null, originOf: OriginOf): WorldFace {
   if (face === undefined || domain === null) return { title: null, image: null };
-  const image = face.image?.startsWith(`https://${domain}/`) === true ? face.image : null;
+  const image = face.image?.startsWith(`${originOf(domain)}/`) === true ? face.image : null;
   return { title: face.title, image };
 }
+
+/** Where a world is served, without a closing slash; the house's `https://<domain>` unless the install says otherwise. */
+export type OriginOf = (domain: string) => string;
+const publicOrigin: OriginOf = (domain) => `https://${domain}`;
 
 /**
  * The picture a world of the room wears when it has none of its own: the
@@ -208,7 +212,10 @@ export function worldCards(input: {
   readonly inside?: Readonly<Record<string, number | null>>;
   readonly ais?: Readonly<Record<string, number | null>>;
   readonly faces?: Readonly<Record<string, WorldFace>>;
+  /** Where each world is served (a self-hosted install's own engine); absent: `https://<domain>`. */
+  readonly originOf?: OriginOf;
 }): readonly WorldCard[] {
+  const originOf = input.originOf ?? publicOrigin;
   const seen = new Set<string>();
   const cards: WorldCard[] = [];
   for (const entry of input.fleet) {
@@ -223,7 +230,7 @@ export function worldCards(input: {
     const counted = input.inside?.[entry.id];
     const inside = typeof counted === 'number' ? counted : null;
     const aisCounted = input.ais?.[entry.id];
-    const face = faceOf(input.faces?.[entry.id], entry.domain);
+    const face = faceOf(input.faces?.[entry.id], entry.domain, originOf);
     cards.push({
       id: entry.id,
       name: worldName(face.title, entry.id),
@@ -231,7 +238,7 @@ export function worldCards(input: {
       inside,
       ais: inside !== null && typeof aisCounted === 'number' ? aisCounted : null,
       cover: face.image ?? community.image ?? null,
-      url: entry.domain === null ? null : `https://${entry.domain}/`,
+      url: entry.domain === null ? null : `${originOf(entry.domain)}/`,
       community: { id: community.id, name: community.name },
       city: community.founder,
     });

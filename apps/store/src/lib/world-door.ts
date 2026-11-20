@@ -23,6 +23,7 @@
  */
 
 import { passApiUrl } from './mundos';
+import { isWorldAddress } from './world-address';
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -106,10 +107,10 @@ export type FunctionsFailure =
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** The pass out of the address the pass route answers: `https://host/#pass=<token>`; null if there is none. */
+/** The pass out of the address the pass route answers: `https://host/#pass=<token>` (or this machine's own engine's); null if there is none. */
 export function passFromAddress(address: unknown): string | null {
-  if (typeof address !== 'string') return null;
-  const hash = /^https:\/\/[^\s#]+#(\S+)$/.exec(address)?.[1];
+  if (!isWorldAddress(address)) return null;
+  const hash = /^[^#\s]+#(\S+)$/.exec(address)?.[1];
   if (hash === undefined) return null;
   const token = new URLSearchParams(hash).get('pass');
   return token !== null && /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)

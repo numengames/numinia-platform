@@ -17,6 +17,9 @@
  * every few minutes and the world's version changes only when it is updated.
  */
 
+import { worldOrigin } from './local-worlds';
+import { runtimeEnv } from './runtime-env';
+
 type Fetch = typeof fetch;
 
 /** The first engine whose pass takes an `ia` block. */
@@ -69,7 +72,7 @@ export async function worldTakesIa(
   }
   let yes: boolean;
   try {
-    const response = await fetchImpl(`https://${host}/status`, {
+    const response = await fetchImpl(`${worldOrigin(host, runtimeEnv())}/status`, {
       headers: { accept: 'application/json', 'user-agent': 'numinia-agent-pass' },
       signal: AbortSignal.timeout(timeoutMs),
     });
