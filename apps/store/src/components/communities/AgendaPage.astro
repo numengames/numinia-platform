@@ -22,8 +22,11 @@ import { allRituals, tillRituals } from '../../lib/rituals-till';
 import { runtimeBinding } from '../../lib/runtime-env';
 import Icon from '../chrome/Icon.astro';
 import Countdown from './Countdown.astro';
-import { COMMUNITIES, RITUALS, communityOf } from './register';
+import { COMMUNITIES, rituals, communityOf } from './register';
 import RitualCard from './RitualCard.astro';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 import '../../styles/communities.css';
 
 interface Props {

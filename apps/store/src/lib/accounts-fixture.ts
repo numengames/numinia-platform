@@ -124,6 +124,9 @@ import {
   type DeskTeamAnswer,
   type DeskTerms,
   type DeskPublicTermsAnswer,
+  type DeskRepository,
+  type DeskRepositoryAnswer,
+  type DeskRepositoryLink,
   type DeskTermsAnswer,
   type DeskTopupAnswer,
   type DeskWorld,
@@ -265,6 +268,27 @@ const LAST_LINES = 100;
 const ADMIN_ROLE = 'Administration';
 const BASE_ROLE = '@everyone';
 const BASE_ACTS: readonly OrganizationAccess[] = ['enter-worlds', 'top-up', 'view-balance'];
+
+/** The till's refusals about a repository's link, as it words them (apps/till `REPOSITORY_PROBLEMS`). */
+const REPOSITORY_LINK_SHAPE =
+  'repository must be an object with a name, a state and, on an error, a problem';
+const REPOSITORY_TRANSFERRED =
+  'the repository was transferred: it is the organization’s own and its link is final';
+const REPOSITORY_RENAMED = 'the repository is linked already: its name changes only after an error';
+
+/** The link numinia.com sends (`{name, state, problem?}`), or null for one out of shape. */
+function readRepositoryLink(value: unknown): Omit<DeskRepositoryLink, 'updatedAt'> | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
+  const { name, state, problem } = value as Readonly<Record<string, unknown>>;
+  if (typeof name !== 'string' || !/^[a-z0-9][a-z0-9-]{0,99}$/.test(name)) return null;
+  if (state !== 'creating' && state !== 'ready' && state !== 'error' && state !== 'transferred') {
+    return null;
+  }
+  const words = typeof problem === 'string' ? problem.trim() : null;
+  const worded = words !== null && words.length >= 1 && words.length <= 200;
+  if (state === 'error' ? !worded : problem !== undefined && problem !== null) return null;
+  return { name, state, problem: state === 'error' ? words : null };
+}
 
 /** The till's refusal for want of a permission, as it words it. */
 const needs = (act: OrganizationAccess): string =>
@@ -1180,6 +1204,15 @@ export function createAccountsFixtureDesk(
     };
   };
 
+  // ---- «Each organization's repository»: shared by every wallet's copy, as the till's organization_repositories ----
+  const repositoryKept = new WeakMap<Book, DeskRepositoryLink>();
+  const repositoryView = (entry: Entry): DeskRepository => ({
+    ok: true,
+    accountId: entry.book.id,
+    repository: copy(repositoryKept.get(entry.book) ?? null),
+    mayEdit: mayPublish(entry),
+  });
+
   // ---- «IAs de organización»: kept apart (agents-fixture.ts), told what this desk knows ----
   const hostEntries = new WeakMap<HostEntry, Entry>();
   const agents = createAgentsFixture(
@@ -1900,6 +1933,30 @@ export function createAccountsFixtureDesk(
       }
       termsKept.set(found.book, published.history);
       return termsView(found);
+    },
+
+    // ---- «Each organization's repository»: the link and its state, with the till's rules ----
+
+    organizationRepository: async (wallet, accountId, house): Promise<DeskRepositoryAnswer> => {
+      const found = entering(wallet, accountId, house);
+      if ('ok' in found) return found;
+      houseRead(found, 'organization-repository');
+      return repositoryView(found);
+    },
+
+    linkRepository: async (wallet, accountId, link, house): Promise<DeskRepositoryAnswer> => {
+      const found = entering(wallet, accountId, house);
+      if ('ok' in found) return found;
+      const next = readRepositoryLink(link);
+      if (next === null) return refuse(REPOSITORY_LINK_SHAPE);
+      if (!mayPublish(found)) return refuse(needs('administrator'));
+      const current = repositoryKept.get(found.book);
+      if (current?.state === 'transferred') return refuse(REPOSITORY_TRANSFERRED);
+      if (current !== undefined && current.state !== 'error' && current.name !== next.name) {
+        return refuse(REPOSITORY_RENAMED);
+      }
+      repositoryKept.set(found.book, { ...next, updatedAt: now().toISOString() });
+      return repositoryView(found);
     },
 
     // condiciones/w3: anybody, no session — the version in force and each version's number and date.

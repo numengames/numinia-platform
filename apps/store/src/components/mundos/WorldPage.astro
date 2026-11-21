@@ -28,13 +28,16 @@ import { runtimeEnv } from '../../lib/runtime-env';
 import { readableWorldName, withAis } from '../../lib/world-index';
 import { hostOf, machineSheet, worldEncounters, worldLead } from '../../lib/world-page';
 import { fleetMachines } from '../../pages/api/mundos/_fleet';
-import { COMMUNITIES, RITUALS } from '../communities/register';
+import { COMMUNITIES, rituals } from '../communities/register';
 import Cover from '../communities/Cover.astro';
 import RsvpAction from '../communities/RsvpAction.astro';
 import Icon from '../chrome/Icon.astro';
 import RitualsLive from '../encuentros/RitualsLive.astro';
 import { loadWorldIndex } from './world-index-data';
 import { WorldView } from './WorldView';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 import '../../styles/communities.css';
 import '../saldo/saldo.css';
 import './mundo.css';

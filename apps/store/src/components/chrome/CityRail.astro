@@ -35,9 +35,12 @@ import {
 } from '../../lib/app-nav';
 import { pick, sedeDomain, upcoming, whenShort, worldOf } from '../../lib/communities';
 import { symbolId } from '../../lib/svg-sprite';
-import { COMMUNITIES, RITUALS } from '../communities/register';
+import { COMMUNITIES, rituals } from '../communities/register';
 import Icon from './Icon.astro';
 import ShellFooter from './ShellFooter.astro';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 
 interface Props {
   locale: SupportedLocale;

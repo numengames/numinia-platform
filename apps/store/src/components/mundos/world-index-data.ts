@@ -14,6 +14,8 @@
  */
 
 import { communityAccountId } from '../../lib/community-teams';
+import { worldOrigin } from '../../lib/local-worlds';
+import { runtimeEnv } from '../../lib/runtime-env';
 import { probeWorlds, readFaces } from '../../lib/worlds-source';
 import type { WorldFace } from '../../lib/worlds';
 import {
@@ -110,6 +112,7 @@ async function read(): Promise<Index> {
       inside,
       ais,
       faces,
+      originOf: (domain) => worldOrigin(domain, runtimeEnv()),
     }),
   };
 }

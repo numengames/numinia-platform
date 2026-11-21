@@ -27,7 +27,7 @@ import {
   yearOf,
   type Community,
 } from '../../lib/communities';
-import { RITUALS } from './register';
+import { rituals } from './register';
 import Icon from '../chrome/Icon.astro';
 import RitualsLive from '../encuentros/RitualsLive.astro';
 import Cover from './Cover.astro';
@@ -39,6 +39,9 @@ import PeopleList from './PeopleList.astro';
 import SpaceUses from './SpaceUses.astro';
 import ClaimStrip from './ClaimStrip.astro';
 import WorldDoors from '../mundos/WorldDoors.astro';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 import '../../styles/communities.css';
 
 interface Props {

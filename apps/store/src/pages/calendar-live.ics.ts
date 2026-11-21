@@ -9,7 +9,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { COMMUNITIES, RITUALS } from '../components/communities/register';
+import { COMMUNITIES, rituals } from '../components/communities/register';
 import { accountsFrom } from '../lib/accounts-source';
 import { icsFeed, upcoming } from '../lib/communities';
 import { env } from '../lib/env';
@@ -26,7 +26,7 @@ export const GET: APIRoute = async () => {
     true,
   );
   return new Response(
-    icsFeed(upcoming(allRituals(RITUALS, rows, COMMUNITIES, now)), COMMUNITIES, {
+    icsFeed(upcoming(allRituals(rituals(), rows, COMMUNITIES, now)), COMMUNITIES, {
       name: 'Numinia',
       site: env.publicSiteUrl.replace(/\/$/, ''),
       locale: 'en',

@@ -11,11 +11,14 @@ import { AGORA_PLAZA, type SupportedLocale } from '@numinia/domain';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { COMMUNITIES_UI } from '../../i18n/communities';
 import { dayAndMonth, pick, ritualEndMs, sedeDomain, upcoming, worldOf } from '../../lib/communities';
-import { COMMUNITIES, RITUALS, communityOf } from './register';
+import { COMMUNITIES, rituals, communityOf } from './register';
 import Icon from '../chrome/Icon.astro';
 import Countdown from './Countdown.astro';
 import InsideCount from './InsideCount.astro';
 import WorldDoors from '../mundos/WorldDoors.astro';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 import '../../styles/communities.css';
 
 interface Props {

@@ -18,7 +18,7 @@
 
 import type { APIRoute } from 'astro';
 import { AGORA_PLAZA, isSupportedLocale, type SupportedLocale } from '@numinia/domain';
-import { REGISTER, RITUALS } from '../../components/communities/register';
+import { REGISTER, rituals as ritualsAt } from '../../components/communities/register';
 import { NOTIFICATIONS_UI } from '../../i18n/notifications';
 import { accountsFrom } from '../../lib/accounts-source';
 import { SESSION_COOKIE } from '../../lib/auth/server';
@@ -59,7 +59,12 @@ export const GET: APIRoute = async ({ cookies, url }) => {
   const rsvps = rsvpsFrom({ binding, dataSource: process.env.DATA_SOURCE });
   const commons = { href: AGORA_PLAZA.worldUrl, name: AGORA_PLAZA.name[locale] };
   // The files and the till's rows, as every list shows them (cut M); the till not there leaves the files.
-  const rituals = allRituals(RITUALS, await tillRituals(desk, null, true), REGISTER, now.getTime());
+  const rituals = allRituals(
+    ritualsAt(now),
+    await tillRituals(desk, null, true),
+    REGISTER,
+    now.getTime(),
+  );
   if (process.env.DATA_SOURCE === 'fixture') {
     const mine = rsvps === null ? null : await rsvps.myRsvps(asker.wallet.toLowerCase());
     const tillIds =

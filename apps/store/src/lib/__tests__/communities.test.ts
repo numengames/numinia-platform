@@ -108,7 +108,7 @@ function community(extra: Record<string, unknown> = {}): Community {
 }
 
 describe('the register on disk', () => {
-  it('has the founder and every community Pablo named, each file parsing clean', () => {
+  it('has the founder, every community Pablo named and the test one of the house (p1), each file parsing clean', () => {
     const ids = REGISTER.map((entry) => entry.id).sort();
     expect(ids).toEqual([
       'active-inference',
@@ -122,6 +122,7 @@ describe('the register on disk', () => {
       'mad-tech-campus',
       'merge',
       'numen-games',
+      'p1',
       'reset',
       'tetuan-valley',
       'trgcon',
@@ -132,11 +133,11 @@ describe('the register on disk', () => {
     ]);
   });
 
-  it('keeps the four prepared pages out of the site until their community says yes', () => {
+  it('keeps the four prepared pages and the test community of the house out of the site', () => {
     const prepared = REGISTER.filter((entry) => entry.visibility === 'house')
       .map((entry) => entry.id)
       .sort();
-    expect(prepared).toEqual(['adigital', 'backfund', 'cps', 'mad-tech-campus']);
+    expect(prepared).toEqual(['adigital', 'backfund', 'cps', 'mad-tech-campus', 'p1']);
     expect(published(REGISTER)).toHaveLength(11);
   });
 

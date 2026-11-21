@@ -31,10 +31,13 @@ import {
   upcoming,
 } from '../../lib/communities';
 import { byMonth } from '../../lib/encuentros';
-import { RITUALS, communityOf } from '../communities/register';
+import { rituals, communityOf } from '../communities/register';
 import Icon from '../chrome/Icon.astro';
 import Countdown from '../communities/Countdown.astro';
 import RitualsLive from './RitualsLive.astro';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 import '../../styles/communities.css';
 
 interface Props {

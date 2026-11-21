@@ -20,6 +20,8 @@ import legacyBook from '../../../data/legacy-worlds.json';
 import fixtureFleet from '../../../../fixtures/worlds/fleet.json';
 import { authConfigured, SESSION_COOKIE, verifySession } from '../../../lib/auth/server';
 import { gatherFleet, readMachine, type MachineView } from '../../../lib/fleet';
+import { localFleetBase } from '../../../lib/local-worlds';
+import { runtimeEnv } from '../../../lib/runtime-env';
 import { loadSumma } from '../../../lib/summa';
 import {
   FLEET_MACHINES,
@@ -83,14 +85,18 @@ export const GET: APIRoute = async ({ cookies }) => {
     faces = FIXTURE.faces;
     engine = FIXTURE.engine ?? null;
   } else {
+    // A self-hosted install with its own fleet door (LOCAL_FLEET_URL): its machines, and no world run by hand.
+    const localFleet = localFleetBase(runtimeEnv());
     const [read, summa, newest] = await Promise.all([
-      Promise.all(FLEET_MACHINES.map((machine) => readMachine(fetch, machine.alias))),
+      Promise.all(
+        FLEET_MACHINES.map((machine) => readMachine(fetch, machine.alias, undefined, localFleet)),
+      ),
       loadSumma(),
       latestEngine(fetch),
     ]);
     views = read;
     cards = worldCards(summa.entities);
-    legacy = LEGACY;
+    legacy = localFleet === null ? LEGACY : [];
     engine = newest;
     const { orders } = gatherFleet(views);
     // A world without a card is named and pictured by its own page.

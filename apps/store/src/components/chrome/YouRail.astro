@@ -54,7 +54,10 @@ import {
 } from '../../lib/app-nav';
 import Icon from './Icon.astro';
 import LanguageMenu from './LanguageMenu.astro';
-import { COMMUNITIES, RITUALS } from '../communities/register';
+import { COMMUNITIES, rituals } from '../communities/register';
+
+/** Settled at render (register.ts): never at module scope. */
+const RITUALS = rituals();
 
 interface Props {
   locale: SupportedLocale;

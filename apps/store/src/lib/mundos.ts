@@ -13,15 +13,16 @@
 import type { SupportedLocale } from '@numinia/domain';
 import type { Counted } from '../i18n/mundos';
 import { readableWorldName, type VenueFace } from './world-index';
+import { isWorldAddress } from './world-address';
 import type { OrgWorld, WorldHome } from './worlds-homes';
 
 /** A world of «Sedes» as the panel draws it: the placement, with its name and picture (MIS-265). */
 export type Venue = OrgWorld & VenueFace;
 
-/** A picture a card may draw: one of this site (`/…`) or https; anything else is dropped. */
+/** A picture a card may draw: one of this site (`/…`), https, or this machine's own engine (a self-hosted install); anything else is dropped. */
 const isPicture = (value: unknown): value is string =>
   typeof value === 'string' &&
-  ((value.startsWith('/') && !value.startsWith('//')) || value.startsWith('https://'));
+  ((value.startsWith('/') && !value.startsWith('//')) || isWorldAddress(value));
 
 /** The house's placements: who each world belongs to (an Oracle's session). */
 export const HOMES_API = '/api/admin/worlds/homes';
@@ -150,9 +151,8 @@ export interface WorldPage {
   readonly url: string | null;
 }
 
-/** An address a browser may be sent to: https and nothing else. */
-const isHttps = (value: unknown): value is string =>
-  typeof value === 'string' && /^https:\/\/[^\s]+$/.test(value);
+/** An address a browser may be sent to: https, or this machine's own engine (a self-hosted install). */
+const isHttps = isWorldAddress;
 
 export function readWorldPage(json: unknown): WorldPage | null {
   if (!isRecord(json) || !isText(json.worldId) || typeof json.manage !== 'boolean') return null;
