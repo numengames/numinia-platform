@@ -1,0 +1,1 @@
+- UPD — A self-hosted copy of the site on loopback can now name its own MCP relay (RELAY_LOOPBACK_ORIGIN, accepted only for 127.0.0.1 or localhost), so an AI can connect to it from the same computer. numinia.com is unchanged.

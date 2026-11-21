@@ -26,7 +26,6 @@ import {
   REFRESH_TOKEN_IDLE_TTL_SECONDS,
   REFRESH_TOKEN_TTL_SECONDS,
   REGISTER_PATH,
-  RESOURCE,
   SCOPE_OFFLINE,
   SCOPE_WORLDS,
   TOKEN_PATH,
@@ -61,34 +60,42 @@ export function capRefresh(
   return { refreshTokenIdleTTL: Math.min(REFRESH_TOKEN_IDLE_TTL_SECONDS, left) };
 }
 
-/** The provider's whole configuration; exported so the tests read what is deployed. */
-export const PROVIDER_OPTIONS = {
-  apiRoute: MCP_PATH,
-  apiHandler: {
-    fetch: (request: Request, env: Env, ctx: ExecutionContext) => handleMcp(request, env, ctx),
-  },
-  defaultHandler: { fetch: (request: Request, env: Env) => handleDefault(request, env) },
-  authorizeEndpoint: AUTHORIZE_PATH,
-  tokenEndpoint: TOKEN_PATH,
-  clientRegistrationEndpoint: REGISTER_PATH,
-  accessTokenTTL: ACCESS_TOKEN_TTL_SECONDS,
-  refreshTokenTTL: REFRESH_TOKEN_TTL_SECONDS,
-  refreshTokenIdleTTL: REFRESH_TOKEN_IDLE_TTL_SECONDS,
-  tokenExchangeCallback: capRefresh,
-  clientRegistrationTTL: CLIENT_REGISTRATION_TTL_SECONDS,
-  // Public clients (no secret, PKCE instead) may register: Claude, ChatGPT
-  // and Hermes are all public clients.
-  disallowPublicClientRegistration: false,
-  clientIdMetadataDocumentEnabled: true,
-  allowTokenExchangeGrant: false,
-  scopesSupported: [SCOPE_WORLDS, SCOPE_OFFLINE],
-  requiredScopes: [SCOPE_WORLDS],
-  // A panel token pasted as a static bearer, for clients without OAuth (story W11, bearer.ts).
-  resolveExternalToken: resolveStaticBearer,
-  resourceMetadata: {
-    resource: RESOURCE,
-    authorization_servers: [ORIGIN],
-    bearer_methods_supported: ['header'],
-    resource_name: 'Numinia',
-  },
-} satisfies OAuthProviderOptions<Env>;
+/**
+ * The provider's whole configuration for a relay answering at `origin`:
+ * https://mcp.numinia.com, or the loopback origin of a self-hosted copy
+ * (env.ts `relayOrigin`). Everything but the origin is the same.
+ */
+export const providerOptions = (origin: string) =>
+  ({
+    apiRoute: MCP_PATH,
+    apiHandler: {
+      fetch: (request: Request, env: Env, ctx: ExecutionContext) => handleMcp(request, env, ctx),
+    },
+    defaultHandler: { fetch: (request: Request, env: Env) => handleDefault(request, env) },
+    authorizeEndpoint: AUTHORIZE_PATH,
+    tokenEndpoint: TOKEN_PATH,
+    clientRegistrationEndpoint: REGISTER_PATH,
+    accessTokenTTL: ACCESS_TOKEN_TTL_SECONDS,
+    refreshTokenTTL: REFRESH_TOKEN_TTL_SECONDS,
+    refreshTokenIdleTTL: REFRESH_TOKEN_IDLE_TTL_SECONDS,
+    tokenExchangeCallback: capRefresh,
+    clientRegistrationTTL: CLIENT_REGISTRATION_TTL_SECONDS,
+    // Public clients (no secret, PKCE instead) may register: Claude, ChatGPT
+    // and Hermes are all public clients.
+    disallowPublicClientRegistration: false,
+    clientIdMetadataDocumentEnabled: true,
+    allowTokenExchangeGrant: false,
+    scopesSupported: [SCOPE_WORLDS, SCOPE_OFFLINE],
+    requiredScopes: [SCOPE_WORLDS],
+    // A panel token pasted as a static bearer, for clients without OAuth (story W11, bearer.ts).
+    resolveExternalToken: resolveStaticBearer,
+    resourceMetadata: {
+      resource: `${origin}${MCP_PATH}`,
+      authorization_servers: [origin],
+      bearer_methods_supported: ['header'],
+      resource_name: 'Numinia',
+    },
+  }) satisfies OAuthProviderOptions<Env>;
+
+/** The deployed configuration, exported so the tests read what is deployed. */
+export const PROVIDER_OPTIONS = providerOptions(ORIGIN);
