@@ -13,7 +13,7 @@ import { SESSION_COOKIE } from '../../lib/auth/server';
 import { sessionAsker } from '../../lib/auth/session-wallet';
 import { answerConsent } from '../../lib/conectar-ia-page';
 import { relayFrom } from '../../lib/relay-handoff';
-import { runtimeBinding } from '../../lib/runtime-env';
+import { runtimeBinding, runtimeEnv } from '../../lib/runtime-env';
 
 export const prerender = false;
 
@@ -21,7 +21,12 @@ export const prerender = false;
 const desk = () =>
   accountsFrom({ binding: runtimeBinding('TILL_ACCOUNTS'), dataSource: process.env.DATA_SOURCE });
 const relay = () =>
-  relayFrom({ binding: runtimeBinding('MCP_HANDOFF'), dataSource: process.env.DATA_SOURCE });
+  relayFrom({
+    binding: runtimeBinding('MCP_HANDOFF'),
+    dataSource: process.env.DATA_SOURCE,
+    // Only a self-hosted copy on loopback sets it; numinia.com never does.
+    loopbackOrigin: runtimeEnv().RELAY_LOOPBACK_ORIGIN,
+  });
 
 export const POST: APIRoute = async ({ cookies, request, url }) =>
   answerConsent(

@@ -33,8 +33,7 @@ import {
   ExternalTokenError,
   type ResolveExternalTokenInput,
 } from '@cloudflare/workers-oauth-provider';
-import { RESOURCE } from './config';
-import { storeFetch, storeOrigin, type Env } from './env';
+import { relayResource, storeFetch, storeOrigin, type Env } from './env';
 import { BEARER_PER_MINUTE, LIMIT_WINDOW_SECONDS, bearerAllowed } from './limites';
 import { askMeByToken } from './me';
 import type { GrantProps } from './vuelta';
@@ -105,7 +104,7 @@ export async function resolveStaticBearer({
           via: STATIC_VIA,
           hear: answer.me.hear,
         },
-        audience: RESOURCE,
+        audience: relayResource(env),
       };
     case 'revoked':
       return null;

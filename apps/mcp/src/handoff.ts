@@ -14,8 +14,8 @@
 import type { AuthRequest } from '@cloudflare/workers-oauth-provider';
 import { WorkerEntrypoint } from 'cloudflare:workers';
 import { z } from 'zod';
-import { ORIGIN, REQUEST_TTL_SECONDS, VUELTA_PATH } from './config';
-import type { Env } from './env';
+import { REQUEST_TTL_SECONDS, VUELTA_PATH } from './config';
+import { relayOrigin, type Env } from './env';
 import { seal, toBase64Url, type Sealed } from './seal';
 
 /** A request id: what the consent page accepts (16–128 of `[A-Za-z0-9_-]`). */
@@ -112,7 +112,8 @@ export type HandOff = z.infer<typeof handOffShape>;
 export type KeepAnswer = { readonly ok: true; readonly next: string } | { readonly ok: false };
 
 /** Where numinia.com sends the browser once the token is sealed. */
-export const vueltaUrl = (req: string): string => `${ORIGIN}${VUELTA_PATH}?req=${req}`;
+export const vueltaUrl = (origin: string, req: string): string =>
+  `${origin}${VUELTA_PATH}?req=${req}`;
 
 /**
  * Seal the token for the request's browser and answer `/vuelta`'s address.
@@ -132,7 +133,7 @@ export async function keepHandOff(env: Env, input: unknown): Promise<KeepAnswer>
     // KV keeps nothing for less than a minute; the request's own time rules anyway.
     expirationTtl: Math.max(60, pending.expiresAt - nowSeconds()),
   });
-  return { ok: true, next: vueltaUrl(handOff.req) };
+  return { ok: true, next: vueltaUrl(relayOrigin(env), handOff.req) };
 }
 
 /**

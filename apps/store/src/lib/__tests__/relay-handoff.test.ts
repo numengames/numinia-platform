@@ -12,6 +12,7 @@ import {
   fixtureRelay,
   relayFrom,
   relayOf,
+  relayOriginFrom,
   vueltaHref,
   type RelayDesk,
 } from '../relay-handoff';
@@ -169,5 +170,60 @@ describe('which relay', () => {
 
   it('builds /vuelta on the relay’s origin', () => {
     expect(vueltaHref(REQ)).toBe('https://mcp.numinia.com/vuelta?req=req_0123456789abcdef');
+  });
+});
+
+describe('the relay on loopback (a self-hosted copy)', () => {
+  const LOCAL = 'http://127.0.0.1:4326';
+
+  it('is the production relay unless the var is a bare loopback origin', () => {
+    expect(relayOriginFrom(undefined)).toBe(RELAY_ORIGIN);
+    expect(relayOriginFrom(LOCAL)).toBe(LOCAL);
+    expect(relayOriginFrom('http://localhost:4326')).toBe('http://localhost:4326');
+    for (const value of [
+      '',
+      'nonsense',
+      'https://evil.com',
+      'http://numinia.com',
+      'http://127.0.0.1.evil.com',
+      'http://127.0.0.2:4326',
+      'http://[::1]:4326',
+      'http://127.0.0.1:4326/',
+      'http://127.0.0.1:4326/vuelta',
+      'http://user@127.0.0.1:4326',
+      'ftp://127.0.0.1:4326',
+    ]) {
+      expect(relayOriginFrom(value)).toBe(RELAY_ORIGIN);
+    }
+  });
+
+  it('builds /vuelta on the given origin', () => {
+    expect(vueltaHref(REQ, LOCAL)).toBe(`${LOCAL}/vuelta?req=${REQ}`);
+  });
+
+  it('accepts the loopback relay’s /vuelta and refuses the production one', async () => {
+    const own = relayOf(deskOf(null, { ok: true, next: vueltaHref(REQ, LOCAL) }), vi.fn(), LOCAL);
+    expect(await own.handOff(CONNECTION, TOKEN)).toEqual({
+      ok: true,
+      next: vueltaHref(REQ, LOCAL),
+    });
+    const log = vi.fn();
+    const other = relayOf(deskOf(null, { ok: true, next: vueltaHref(REQ) }), log, LOCAL);
+    expect(await other.handOff(CONNECTION, TOKEN)).toEqual({ ok: false, refusal: 'unavailable' });
+    // And the other way round: a relay without the var keeps refusing a loopback address.
+    const prod = relayOf(deskOf(null, { ok: true, next: vueltaHref(REQ, LOCAL) }), log);
+    expect(await prod.handOff(CONNECTION, TOKEN)).toEqual({ ok: false, refusal: 'unavailable' });
+  });
+
+  it('reads the loopback origin when the relay is built from the Worker’s env', async () => {
+    const desk = deskOf(null, { ok: true, next: vueltaHref(REQ, LOCAL) });
+    const relay = relayFrom({ binding: desk, dataSource: undefined, loopbackOrigin: LOCAL });
+    expect(await relay?.handOff(CONNECTION, TOKEN)).toMatchObject({ ok: true });
+    const bad = relayFrom({
+      binding: desk,
+      dataSource: undefined,
+      loopbackOrigin: 'https://evil.com',
+    });
+    expect(await bad?.handOff(CONNECTION, TOKEN)).toMatchObject({ ok: false });
   });
 });
